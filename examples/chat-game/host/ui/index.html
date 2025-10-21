@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Game Host</title>
+</head>
+<body>
+  <h1>Host Game</h1>
+  <p id="status">Connecting to signaling server...</p>
+  <p><strong>Room ID:</strong> <span id="room-id">—</span></p>
+  <p><strong>Peers:</strong> <span id="peer-count">0</span></p>
+
+  <form id="chatForm">
+  <input type="text" id="chatInput" placeholder="Type message..." autocomplete="off" />
+  <button type="submit">Send</button>
+</form>
+<div id="chatBox" style="border:1px solid #ccc; height: 200px; overflow-y: auto;"></div>
+
+
+  <script type="module" src="renderer.js"></script>
+</body>
+</html>

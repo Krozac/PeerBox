@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../../../../framework/styles/base.css" />
+  <link rel="stylesheet" href="../../../../framework/styles/themes/bubbles.css" />
+</head>
+<body>
+  <h1 class="pb-title">PeerBox</h1>
+
+  <form id="hostForm" class="pb-chat-join-form">
+    <label for="username">Username:</label>
+    <input 
+      type="text" 
+      class="pb-form-input" 
+      id="username" 
+      name="username" 
+      required  
+      placeholder="Enter username" 
+    />
+    <button type="submit" id="createRoom" class="pb-chat-submit">Create Room</button>
+  </form>
+
+  <script>
+    document.getElementById('hostForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      localStorage.setItem('role', 'host'); // Optional
+      localStorage.setItem('username', username);
+
+      window.env.host.setUsername(username); // Set the local username for the host
+      window.env.host.createRoom(); // Trigger redirect + server start
+    });
+  </script>
+</body>
+</html>

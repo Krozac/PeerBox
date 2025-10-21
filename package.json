@@ -1,0 +1,35 @@
+{
+  "name": "peerbox-monorepo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:framework": "node scripts/build-framework.js --watch",
+    "build:framework": "node scripts/build-framework.js",
+    "dev:example": "cross-env EXAMPLE=chat-game vite --config examples/chat-game/vite.config.js",
+    "build:example": "cross-env EXAMPLE=chat-game vite build --config examples/chat-game/vite.config.js",
+    "dev:host": "npx electron examples/chat-game/host/main.cjs",
+    "build:host": "cross-env EXAMPLE=chat-game electron-builder",
+    "dev:signal": "node signaling/signaling.js",
+    "dev:all": "concurrently \"npm run dev:framework\" \"npm run dev:example\" \"npm run dev:host\" \"npm run dev:signal\""
+  },
+  "dependencies": {
+    "concurrently": "^9.2.0",
+    "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
+    "eventemitter3": "^5.0.1",
+    "express": "^5.1.0",
+    "fs-extra": "^11.3.1",
+    "node-fetch": "^3.3.2",
+    "uuid": "^11.1.0",
+    "wrtc": "^0.4.7",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "electron": "^26.0.0",
+    "electron-builder": "^24.6.0",
+    "esbuild": "^0.25.9",
+    "esbuild-css-modules-plugin": "^3.1.5",
+    "vite": "^6.3.5",
+    "vite-plugin-css-injected-by-js": "^3.5.2"
+  }
+}

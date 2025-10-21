@@ -1,0 +1,9 @@
+{
+  "name": "signaling",
+  "version": "1.0.0",
+  "dependencies": {
+    "ws": "^8.18.3",
+    "express": "^5.1.0",
+    "uuid": "^9.0.0"
+  }
+}

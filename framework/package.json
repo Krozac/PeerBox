@@ -1,0 +1,25 @@
+{
+  "name": "peerbox",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.cjs",      
+  "module": "./dist/index.js",      
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./client": {
+      "import": "./dist/client.js"
+    },
+    "./host": {
+      "require": "./dist/host.cjs"
+    }
+  },
+  "scripts": {
+    "build:esm": "vite build --config vite.config.esm.js",
+    "build:cjs": "vite build --config vite.config.cjs.js",
+    "build": "npm run build:esm && npm run build:cjs && node scripts/mergeDist.js"
+  }
+
+}

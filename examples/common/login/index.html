@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PeerBox</title>
+  <link rel="stylesheet" href ="login.css">
+</head>
+<body>
+  <h1 class="pb-bubbles-title">PeerBox</h1>
+  <img id = "svg" src="peerbox.svg" style="width:45px"></img>
+  <!-- Join Form -->
+  <form id="joinForm" class="pb-bubbles-chat-join-form">
+    <label for="roomId">ROOM ID</label>
+    <input type="text" class="pb-bubbles-form-input" id="roomId" maxlength="6" required />
+    <label for="username">USERNAME</label>
+    <input type="text" class="pb-bubbles-form-input" id="username" placeholder="Enter username" required />
+    <button type="submit" id="submit">Join</button>
+  </form>
+
+  <script type="module" src="login.js"></script>
+</body>
+</html>

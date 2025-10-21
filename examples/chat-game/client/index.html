@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PeerBox</title>
+  <link rel="stylesheet" href="./assets/styles/bubbles.css"/>
+</head>
+<body>
+  <div id="game-root">
+    <div id="persistent-ui">
+      <h1 class="pb-bubbles-title">PeerBox</h1>
+
+      <!-- Status -->
+      <div id="toast-container" class="pb-bubbles-toast-container"></div>
+      <div id="status" style="position:absolute; top:5px; right:20px; background-color: rgba(102, 102, 102, 0.473);">
+        <div id="status-fps"></div>
+        <div id="status-ping"></div>
+        <div id="status-client"></div>
+        <div id="status-entity"></div>
+      </div>
+
+      <!-- Room ID Display -->
+      <div id="room-id-wrapper" class="pb-bubbles-room-id-container">
+        <div id="room-id" class="pb-bubbles-room-id"></div>
+        <button id="copyRoomIdBtn" type="button" title="Copy Room ID" aria-label="Copy Room ID" class="pb-bubbles-room-id-copy pb-bubbles-button">
+          <img src="assets/copy.svg" alt="Copy Room ID" />
+        </button>
+      </div>
+
+
+      <button id="leaveRoomBtn" class="pb-bubbles-chat-leave-btn" style="display: none;">
+        <img src="assets/leave.svg" alt="Leave Room" />
+      </button>
+    </div>
+    <!-- Scene Root -->
+    <div id="scene-container"></div>
+
+  </div>
+  <script type="module" src="main.js"></script>
+</body>

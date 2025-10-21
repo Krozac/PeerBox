@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Loading...</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      overflow: hidden;
+      font-family: "Segoe UI", Roboto, sans-serif;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.6s ease;
+    }
+
+    #container {
+      background: rgba(20, 20, 20, 0.85);
+      border-radius: 16px;
+      box-shadow: 0 0 24px rgba(0, 0, 0, 0.4);
+      padding: 32px 48px;
+      min-width: 320px;
+      text-align: center;
+      color: #fff;
+      animation: fadeIn 0.8s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    #logo {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 16px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    }
+
+    #status {
+      font-size: 1.1rem;
+      margin-top: 12px;
+      color: #d0d0d0;
+    }
+
+    #progress-container {
+      margin-top: 20px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      height: 8px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    #progress-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #4facfe, #00f2fe);
+      transition: width 0.2s ease;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <img id="logo" src="../../../../framework/dist/peerbox.svg" alt="App Logo" />
+    <h2 id="title">Peerbox</h2>
+    <div id="status">Initializing...</div>
+
+    <div id="progress-container" style="display: none;">
+      <div id="progress-bar"></div>
+    </div>
+  </div>
+
+    <script>
+    // Update the status text
+    function setStatus(text) {
+        const el = document.getElementById("status");
+        if (el) el.textContent = text;
+    }
+
+    // Show or hide the progress bar
+    function showProgress(show) {
+        const container = document.getElementById("progress-container");
+        if (container) container.style.display = show ? "block" : "none";
+    }
+
+    // Update progress bar width (clamped 0–100)
+    function setProgress(value) {
+        const bar = document.getElementById("progress-bar");
+        if (!bar) return;
+        const clamped = Math.max(0, Math.min(100, value));
+        bar.style.width = clamped + "%";
+    }
+
+    // Fade out splash screen and close window
+    function fadeOut() {
+        document.body.style.transition = "opacity 0.6s";
+        document.body.style.opacity = "0";
+        setTimeout(() => window.close(), 600);
+    }
+
+    // Expose functions to main via contextBridge
+    window.splashAPI = {
+        setStatus,
+        showProgress,
+        setProgress,
+        onFadeOut: (callback) => {
+        window.addEventListener("splash-fade-out", callback);
+        },
+    };
+
+    console.log(  window.api)
+    console.log(window.env)
+
+    // Listen for main process events
+    window.addEventListener("DOMContentLoaded", () => {
+        window.api?.on("splash-set-status", (_e, text) => setStatus(text));
+        window.api?.on("splash-show-progress", (_e, show) => showProgress(show));
+        window.api?.on("splash-loading-progress", (_e, value) => setProgress(value));
+        window.api?.on("splash-fade-out", fadeOut);
+    });
+    </script>
+</body>
+</html>

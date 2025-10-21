@@ -1,0 +1,26 @@
+<!-- framework/scenes/chatScene.html -->
+<div class="pb-bubbles-chat-container" style="position: absolute;left:10px;top:500px;">
+  <!-- Messages -->
+  <div id="chatBox" class="pb-bubbles-chat-messages"></div>
+
+  <!-- Chat Form -->
+  <form id="chatForm" class="pb-bubbles-chat-form">
+    <input
+      type="text"
+      class="pb-bubbles-chat-input"
+      id="chatInput"
+      placeholder="Type message..."
+      autocomplete="off"
+    />
+    <button type="submit" class="pb-bubbles-chat-submit">Send</button>
+  </form>
+
+</div>
+
+<button id = "settings" class= "pb-bubbles-button" style="position: absolute;right:10px;top:40px;">
+  <img src="assets/cog.svg" alt="Settings" />
+</button>
+<!-- User List -->
+<div id="userlistwrapper" class="pb-bubbles-user-list-container">
+  <ul id="userList" class="pb-bubbles-user-list"></ul>
+</div>

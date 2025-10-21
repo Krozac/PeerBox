@@ -1,0 +1,10 @@
+{
+  "name": "chat-game",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {},
+  "devDependencies": { "vite": "^6.3.5" }
+}

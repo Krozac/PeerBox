@@ -1,0 +1,11 @@
+{
+  "name": "host-app",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "^37.2.4",
+    "wrtc": "^0.4.7"
+  }
+}
