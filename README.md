@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="framework/dist/peerbox.svg" alt="PeerBox Logo" width="120"/>
+  <img src="packages/peerbox/dist/peerbox.svg" alt="PeerBox Logo" width="120"/>
 </p>
 
 <h1 align="center">PeerBox</h1>
