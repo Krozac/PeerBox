@@ -4,6 +4,18 @@
   <meta charset="UTF-8" />
   <title>Loading...</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cherry+Bomb+One&display=swap');
+
+    :root {
+      --primary-color: #ecafff !important;
+      --secondary-color: #c27ab0 !important;
+      --secondary-color-2: #493e8f !important;
+      --background-color: #541e6d !important;
+      --background-color-2: #27214d !important;
+      --text-color: #faf6e7 !important;
+      --font-family: 'Cherry Bomb One', Arial, sans-serif !important;
+    }
+
     html, body {
       margin: 0;
       padding: 0;
@@ -18,9 +30,8 @@
     }
 
     #container {
-      background: rgba(20, 20, 20, 0.85);
+      background: none;
       border-radius: 16px;
-      box-shadow: 0 0 24px rgba(0, 0, 0, 0.4);
       padding: 32px 48px;
       min-width: 320px;
       text-align: center;
@@ -34,21 +45,21 @@
     }
 
     #logo {
-      width: 64px;
-      height: 64px;
-      margin-bottom: 16px;
+      width: 248px;
+      height: 248px;
+      margin-bottom: 0%;
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
     }
 
     #status {
       font-size: 1.1rem;
-      margin-top: 12px;
+      margin-top: 0px;
       color: #d0d0d0;
     }
 
     #progress-container {
-      margin-top: 20px;
-      background: rgba(255, 255, 255, 0.15);
+      margin-top: 12px;
+      background: none;
       border-radius: 8px;
       height: 8px;
       width: 100%;
@@ -61,6 +72,30 @@
       background: linear-gradient(90deg, #4facfe, #00f2fe);
       transition: width 0.2s ease;
     }
+
+    #title {
+      font-family: var(--font-family);
+      color: var(--primary-color);
+      font-size: 5rem;
+      margin:0;
+      text-align: center;
+      text-shadow: 
+          0 1px 0 var(--secondary-color),
+          0 2px 0 var(--secondary-color),
+          0 3px 0 var(--secondary-color),
+          0 4px 0 var(--secondary-color),
+          0 5px 0 var(--secondary-color),
+          0 6px 0 var(--secondary-color),
+          0 7px 0 var(--secondary-color),
+          0 8px 0 var(--secondary-color),
+          0 0 5px rgba(10, 0, 0, .05),
+          0 1px 3px rgba(10, 0, 0, .2),
+          0 3px 5px rgba(10, 0, 0, .2),
+          0 5px 10px rgba(10, 0, 0, .2),
+          0 10px 10px rgba(10, 0, 0, .2),
+          0 20px 20px rgba(10, 0, 0, .3);
+    }
+
   </style>
 </head>
 <body>
@@ -69,7 +104,7 @@
     <h2 id="title">Peerbox</h2>
     <div id="status">Initializing...</div>
 
-    <div id="progress-container" style="display: none;">
+    <div id="progress-container">
       <div id="progress-bar"></div>
     </div>
   </div>

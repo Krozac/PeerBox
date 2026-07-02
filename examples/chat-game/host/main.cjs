@@ -4,11 +4,28 @@ const path = require("path");
 const { randomUUID } = require("crypto");
 
 // Framework host
-const PeerBox = require("../../../framework/dist/index.cjs");
-const { Host } = require("../../../framework/dist/host.cjs");
+const PeerBox = require("peerbox");
+const { createHost } = require("peerbox/node");
 const { ChatMessageComponent } = require("./ecs/components/chatMessageComponent.js");
 
+const fs = require("node:fs");
+
+const { getUserList, getRandomColor } = require("./utils.js");
+const { timeStamp } = require("node:console");
+
+const VoicePlugin = require("peerbox-voice");
+
 const { SyncSystem, Utils } = PeerBox;
+
+const voiceStreams = new Map(); // Map of clientId to MediaStream
+
+const bannedWords = fs
+  .readFileSync(path.join(__dirname, "./fr"), "utf8")
+  .split(/\r?\n/)
+  .map(w => w.trim())
+  .filter(Boolean);
+
+const cleanText = Utils.createTextCleaner(bannedWords);
 
 const gameId = "afbebc9d-9d21-4284-9317-cb0b6daec6a6";
 
@@ -17,14 +34,13 @@ let win;
 let hostInstance;
 let world;
 let username;
-
 // ----------------------
 // Window helpers
 // ----------------------
 function createSplash() {
     splash = new BrowserWindow({
         width: 400,
-        height: 300,
+        height: 500,
         frame: false,
         alwaysOnTop: true,
         transparent: true,
@@ -41,8 +57,8 @@ function createSplash() {
 
 function createMainWindow() {
     win = new BrowserWindow({
-        width: 1280,
-        height: 720,
+        width: 1920,
+        height: 1080,
         minWidth: 200,
         minHeight: 200,
         autoHideMenuBar: true,
@@ -125,13 +141,28 @@ function fadeOutSplash(splashWindow) {
 // ----------------------
 // Host + ECS initialization (refactored)
 // ----------------------
-async function initHost(url = "ws://localhost:5501") {
-    hostInstance = new Host({ url });
-    hostInstance.reconnectManager.configure({
-        onAttempt: (id, n) => console.log(`Reconnecting ${id}, try ${n}`),
-        onSuccess: (id) => console.log(`Reconnected ${id}`),
-        onFail: (id) => console.warn(`Failed to reconnect ${id}`),
-    });
+async function initHost(config = {
+    url: "ws://localhost:5501" ,
+    rtcConfiguration: {
+        iceServers: [
+            // STUN (optional on LAN, but harmless)
+            { urls: "stun:stun.l.google.com:19302" },
+
+            // YOUR LOCAL TURN SERVER
+            {
+            urls: [
+                "turn:192.168.1.15:3478?transport=udp",
+                "turn:192.168.1.15:3478?transport=tcp"
+            ],
+            username: "webrtc",
+            credential: "webrtc123"
+            }
+        ]
+    },
+    plugins: [VoicePlugin()],
+}) {
+    hostInstance = createHost(config);
+
     hostInstance.start();
     return hostInstance;
 }
@@ -144,29 +175,89 @@ function initWorld() {
     return { world, sync };
 }
 
-function registerHostEvents() {
-    hostInstance.onPeerConnected((clientId) => {
+function registerHostEvents(sync) {
+    hostInstance.on("peer-connected",((clientId) => {
         console.log(clientId + " connected ");
-    });
+        //send audio streams to the new client
+        for (const [otherClientId, stream] of voiceStreams.entries()) {
+            if (otherClientId === clientId) continue; // Don't send the new client's own stream back to them
+            hostInstance.plugins.getPlugin("voice").send(stream, clientId);
+        }
+    }));
 
-    hostInstance.onPeerDisconnected((clientId) => {
+    hostInstance.on("peer-disconnected",((clientId) => {
         console.log(clientId + " disconnected ");
-    });
+        const entity = PeerBox.User.getById(clientId, world);
+        if (!entity) return;
+        world.removeEntities([entity]);
 
-    hostInstance.on("intro", ({ clientId, username }) => {
-        console.log(username + " joined the room!");
+        sync.broadcast("users-state", getUserList(world,PeerBox));
+    }));
 
-        let entity = world.createEntity();
-        world.addComponent(entity, PeerBox.Components.userComponent, {
-            id: clientId,
-            name: username,
-            role: "client",
-        });
+    hostInstance.on("peer-transport-lost",((clientId) => {
+        console.log(clientId + " transport lost (possible reconnect) ");
+        const entity = PeerBox.User.getById(clientId, world);
+        if (!entity) return;
 
-        hostInstance.send(clientId, {
+        const userComp = world.getComponent(entity, PeerBox.Components.userComponent);
+
+        userComp.connected = false;
+        sync.broadcast("users-state", getUserList(world,PeerBox));
+    }));
+
+    hostInstance.on("intro", (data) => {
+        let userId = data.clientId;
+        let username = data.payload.username || "Anonymous";
+
+        let entity = PeerBox.User.getById(userId, world);
+
+        console.log("Received intro from", username, "(", userId, ")");
+        //reconnect 
+        if (entity) {
+            const userComp = world.getComponent(entity, PeerBox.Components.userComponent);
+            userComp.connected = true;
+            userComp.name = username; // Update name in case it changed
+            console.log("User reconnected, updating name to", username);
+        }
+        else {
+            entity = world.createEntity();
+            
+            world.addComponent(entity, PeerBox.Components.userComponent, {
+                id: userId,
+                name: username,
+                role: "client",
+                color: getRandomColor(),
+                connected: true,
+            });
+        }
+
+        hostInstance.send(userId, {
             type: "join-ack",
             userEntityId: entity,
             username,
+        });
+
+        sync.broadcast("users-state", getUserList(world,PeerBox));
+
+        //send message history 
+
+        const messageEntities = world.query([ChatMessageComponent]);
+
+        const messages = messageEntities.map((id) => {
+            const msg = world.getComponent(id, ChatMessageComponent);
+
+            return {
+                id,
+                from: msg.from,
+                username: msg.fromName || "Unknown",
+                text: msg.text,
+                timestamp: msg.timestamp,
+            };
+        });
+
+        hostInstance.send(userId, {
+            type: "chat-history",
+            payload: { messages }
         });
     });
 
@@ -181,33 +272,54 @@ function registerHostEvents() {
             win.show();
         }
     });
+
+    hostInstance.on("track", ({ stream, track, clientId }) => {
+        console.log("Received track from", clientId, ":", track.kind);
+        // Broadcast the track to all other clients
+        //save the stream and broadcast it to all other clients except the sender (so newer clients can get the stream)
+
+        voiceStreams.set(clientId, stream);
+        hostInstance.plugins.getPlugin("voice").broadcast(stream, { exclude: clientId });
+    });
 }
 
 function registerSyncEvents(sync) {
+
     sync.onAction("chat-message", ({ world, payload, clientId, seq }) => {
+        console.log("Received chat message from", clientId, ":", payload.text);
         const { text } = payload;
         const user = PeerBox.User.getById(clientId, world);
+        const userComp = world.getComponent(user, PeerBox.Components.userComponent);
 
+        console.log("User component for", user);
         if (!user || typeof text !== "string" || text.length > 500) {
             console.warn("Invalid chat message from", clientId);
             return { valid: false, reason: "Invalid message" };
         }
 
         const entity = world.createEntity();
+        const sanitized = cleanText(text);
         world.addComponent(entity, ChatMessageComponent, {
-            from: user,
-            text,
+            from: clientId,
+            fromName: userComp.name,
+            text : sanitized,
+            timestamp : Date.now()
         });
 
-        const sanitized = Utils.cleanText(text, ["monkey"]);
         return {
             broadcast: true,
             action: "chat-message",
-            payload: { username: user.name, text: sanitized },
+            payload: { username: userComp.name, text: sanitized },
             opts: {},
             seq,
             clientEntityId: user,
+            clientId 
         };
+    });
+
+    //user list 
+    sync.onAction("users-state",(payload) => {
+        sync.broadcast("users-state", getUserList(world,PeerBox));
     });
 }
 
@@ -255,7 +367,7 @@ async function start() {
     const { sync } = initWorld();
 
     await updateSplash(splash, "Registering Host events ...", 30);
-    registerHostEvents();
+    registerHostEvents(sync);
 
     await updateSplash(splash, "Registering Sync events ...", 40);
     registerSyncEvents(sync);

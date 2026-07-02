@@ -1,5 +1,6 @@
-import { Components, Scene } from "../../../../framework/dist/index.js";
+import { Components, Scene } from "peerbox";
 import { SettingsScene } from "./settingsScene.js";
+import { models } from "../assets/index.js";
 
 export const ChatScene = new Scene({
   name: "chat",
@@ -7,6 +8,7 @@ export const ChatScene = new Scene({
 
   onLoad: ({world, client, sync }, sceneManager) => {
     console.log("ChatScene loaded");
+    sceneManager.setTitle("PeerBox");
 
     // --- Helper to render chat messages in UI ---
     const renderChatMessage = (msg) => {
@@ -25,17 +27,35 @@ export const ChatScene = new Scene({
       return entity;
     };
 
+    const renderUser = (user, x , y) => {
+      const entity = world.createEntity();
+      const model = models[user.color] || models["red"]; // fallback to red if color not found
+
+      world.addComponent(entity, Components.HtmlRenderComponent, {
+        parentSelector: "#userList",
+        tagName: "div",
+        classes: ["pb-bubbles-user"],
+        html: `<img src="${model}" alt="${user.name}" class="pb-bubbles-user-item"><span class="pb-bubbles-user-name">${user.name}</span>`,
+        style: {
+          position: "absolute",
+          left: `${x}px`,
+          top: `${y}px`,
+        },
+      });
+      return entity;
+    }
+
     const predictedMessages = new Map();
 
     // --- Register sync handler for chat messages ---
-    sync.onAction("chat-message", ({ payload, clientId ,seq, predicted, confirmed }) => {
+    sync.onAction("chat-message", ({ payload,clientId ,clientEntityId ,seq, predicted, confirmed }) => {
       // You can add extra logic for predicted/confirmed here if needed
 
       const { username, text } = payload;
 
       if (predicted) {
         const entity = renderChatMessage({
-          username: username || (clientId === client.id ? "You" : `User ${clientId}`),
+          username: clientId === client.id ? "You" : `${username}`,
           text,
         });
 
@@ -49,7 +69,7 @@ export const ChatScene = new Scene({
         // ✅ Update existing message instead of creating a new one
         const el = world.getComponent(entity, Components.HtmlRenderComponent);
         if (el) {
-          el.html = `<strong>${username}:</strong> ${text}`;
+          el.html = `<strong>${clientId === client.id ? "You" : `${username}`}:</strong> ${text}`;
         }
 
         // Optionally mark as "synced"
@@ -61,10 +81,10 @@ export const ChatScene = new Scene({
 
         // If it’s a message from another client or new authoritative state
         renderChatMessage({
-          username: username || (clientId === client.id ? "You" : `User ${clientId}`),
+          username: clientId === client.id ? "You" : `${username}`,
           text,
         });
-    });
+    }, { key: "ChatScene.chat-message" });
 
     
     sync.onError("chat-message", ({ clientId, reason,action,seq  })=> {
@@ -81,6 +101,37 @@ export const ChatScene = new Scene({
         }
         predictedMessages.delete(seq);
       }
+    }, { key: "ChatScene.chat-message" });
+
+    sync.onAction("users-state", ({ payload }) => {
+      const users = payload;
+      //cleanup existing users
+      const existingUsers = world.getEntitiesWithComponent(Components.HtmlRenderComponent).filter((entity) => {
+        const comp = world.getComponent(entity, Components.HtmlRenderComponent);
+        return comp?.parentSelector === "#userList";
+      });
+      world.removeEntities(existingUsers);
+
+      let n = 0;
+      for (const user of users) {
+        const { x, y } = layoutUserInCircle(n++,users.length, { cx: 400, cy: 150, radius: 100 });
+        renderUser(user, x, y);
+      }
+    }, { key: "ChatScene.users-state" });
+
+    client.on("chat-history", ({ payload }) => {
+      const { messages } = payload;
+
+      if (!Array.isArray(messages)) return;
+      console.log("client id : ",client.id);
+
+      for (const msg of messages) {
+        renderChatMessage({
+          username:
+            msg.from === client.id ? "You" : `${msg.username}`,
+          text: msg.text,
+        });
+      }
     });
 
     // --- Register local UI events ---
@@ -89,7 +140,7 @@ export const ChatScene = new Scene({
     const chatInput = document.getElementById("chatInput");
 
     const onSettingsClick = async () => {
-      await sceneManager.load(SettingsScene, {world, client});
+      await sceneManager.load(SettingsScene, {world, client}, "bubbles-sweep-right");
     };
 
     const onFormSubmit = (e) => {
@@ -120,3 +171,19 @@ export const ChatScene = new Scene({
     };
   },
 });
+
+function layoutUserInCircle(i, n, { cx, cy, radius }) {
+  if (n === 0) return null;
+
+  if (n === 1) {
+    return { x: cx, y: cy };
+  }
+
+  const step = (Math.PI * 2) / n;
+  const angle = i * step - Math.PI / 2;
+
+  return {
+    x: cx + Math.cos(angle) * radius,
+    y: cy + Math.sin(angle) * radius,
+  };
+}

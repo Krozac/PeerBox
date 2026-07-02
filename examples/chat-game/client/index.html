@@ -4,11 +4,13 @@
   <meta charset="UTF-8" />
   <title>PeerBox</title>
   <link rel="stylesheet" href="./assets/styles/bubbles.css"/>
+  <link rel="stylesheet" href="./assets/styles/transitions.css"/>
 </head>
 <body>
   <div id="game-root">
+    <div class="peerbox-icon-background" id=""></div>
     <div id="persistent-ui">
-      <h1 class="pb-bubbles-title">PeerBox</h1>
+      <h1 class="pb-bubbles-title" id="sceneTitle">PeerBox</h1>
 
       <!-- Status -->
       <div id="toast-container" class="pb-bubbles-toast-container"></div>
@@ -34,7 +36,9 @@
     </div>
     <!-- Scene Root -->
     <div id="scene-container"></div>
-
+    <div id="scene-transition-layer"></div>
   </div>
+
   <script type="module" src="main.js"></script>
 </body>
+  

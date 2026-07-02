@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+  <defs>
+    <radialGradient gradientUnits="userSpaceOnUse" cx="214.223" cy="229.341" r="42.663" id="gradient-0" gradientTransform="matrix(1.856759, 0, 0, 1.856759, -214.523071, -125.804458)">
+      <stop offset="0" style="stop-color: rgb(0% 0% 0%)"></stop>
+      <stop offset="1" style="stop-color: rgb(0% 0% 0%)"></stop>
+    </radialGradient>
+    <linearGradient gradientUnits="userSpaceOnUse" x1="214.223" y1="153.293" x2="214.223" y2="305.389" id="gradient-2" gradientTransform="matrix(1.332846, 1.292701, -0.872326, 0.899419, 96.084442, -187.389366)">
+      <stop offset="0" style="stop-color: rgb(173, 89, 189);"></stop>
+      <stop offset="1" style="stop-color: rgb(107, 46, 133);"></stop>
+    </linearGradient>
+    <linearGradient gradientUnits="userSpaceOnUse" x1="214.223" y1="153.293" x2="214.223" y2="305.389" id="gradient-1" gradientTransform="matrix(1.816762, 0.373075, 0.286517, -1.379938, -118.228394, 532.996025)">
+      <stop offset="0" style="stop-color: rgb(173, 89, 189);"></stop>
+      <stop offset="1" style="stop-color: rgb(107, 46, 133);"></stop>
+    </linearGradient>
+    <radialGradient gradientUnits="userSpaceOnUse" cx="214.223" cy="229.341" r="42.663" id="gradient-3" gradientTransform="matrix(1.852705, 0, 0, -1.856759, -55.442699, 725.926689)">
+      <stop offset="0" style="stop-color: rgb(0% 0% 0%)"></stop>
+      <stop offset="1" style="stop-color: rgb(0% 0% 0%)"></stop>
+    </radialGradient>
+    <linearGradient gradientUnits="userSpaceOnUse" x1="163.102" y1="121.446" x2="163.102" y2="263.926" id="gradient-4" gradientTransform="matrix(1.859111, 0.160699, -0.164651, 1.904842, -194.477701, -157.765214)">
+      <stop offset="0" style="stop-color: rgb(197, 108, 214);"></stop>
+      <stop offset="1" style="stop-color: rgb(107, 46, 133);"></stop>
+    </linearGradient>
+    <linearGradient gradientUnits="userSpaceOnUse" x1="214.223" y1="153.293" x2="214.223" y2="305.389" id="gradient-5" gradientTransform="matrix(1.787771, -0.501432, 0.378652, 1.350011, -113.191772, 25.424759)">
+      <stop offset="0" style="stop-color: rgb(104, 55, 113);"></stop>
+      <stop offset="1" style="stop-color: rgb(57, 25, 70);"></stop>
+    </linearGradient>
+    <radialGradient gradientUnits="userSpaceOnUse" cx="214.223" cy="229.341" r="42.663" id="gradient-6" gradientTransform="matrix(1.856759, 0, 0, 1.856759, -57.027412, -203.01345)">
+      <stop offset="0" style="stop-color: rgb(0% 0% 0%)"></stop>
+      <stop offset="1" style="stop-color: rgb(0% 0% 0%)"></stop>
+    </radialGradient>
+    <linearGradient gradientUnits="userSpaceOnUse" x1="214.223" y1="153.293" x2="214.223" y2="305.389" id="gradient-7" gradientTransform="matrix(1.816762, 0.373075, 0.286517, -1.379938, -277.152405, 454.872185)">
+      <stop offset="0" style="stop-color: rgb(102, 53, 111);"></stop>
+      <stop offset="1" style="stop-color: rgb(50, 21, 62);"></stop>
+    </linearGradient>
+    <radialGradient gradientUnits="userSpaceOnUse" cx="214.223" cy="229.341" r="42.663" id="gradient-8" gradientTransform="matrix(1.852705, 0, 0, -1.856759, -214.366806, 647.801415)">
+      <stop offset="0" style="stop-color: rgb(0% 0% 0%)"></stop>
+      <stop offset="1" style="stop-color: rgb(0% 0% 0%)"></stop>
+    </radialGradient>
+    <radialGradient gradientUnits="userSpaceOnUse" cx="184.237" cy="93.027" r="7.449" id="gradient-9" gradientTransform="matrix(-1.629276, 1.364102, -1.191951, -1.42366, 559.504089, -18.32625)">
+      <stop offset="0" style="stop-color: rgb(169, 217, 240);"></stop>
+      <stop offset="1" style="stop-color: rgb(51, 170, 227);"></stop>
+    </radialGradient>
+    <radialGradient gradientUnits="userSpaceOnUse" cx="184.237" cy="93.027" r="7.449" id="gradient-10" gradientTransform="matrix(-1.629276, 1.364102, -1.191951, -1.42366, 770.913147, 211.428856)">
+      <stop offset="0" style="stop-color: rgb(169, 217, 240);"></stop>
+      <stop offset="1" style="stop-color: rgb(51, 170, 227);"></stop>
+    </radialGradient>
+  </defs>
+  <polygon style="stroke-opacity: 0; fill: url(#gradient-5); stroke: url(#gradient-6); stroke-width: 1px;" points="262.067 81.613 419.923 158.843 419.947 364.019 261.518 289.002"></polygon>
+  <polygon style="stroke-opacity: 0; stroke-width: 1px; fill: url(#gradient-7); stroke: url(#gradient-8); transform-origin: 182.678px 222.889px 0px;" points="103.228 364.036 261.873 286.944 261.734 82.601 103.483 155.786" transform="matrix(-1, 0, 0, -1, 0, 0)"></polygon>
+  <polygon style="stroke-opacity: 0; stroke: url(#gradient-0); fill: url(#gradient-2); stroke-width: 1px;" points="103.552 158.952 262.712 236.223 262.586 441.23 104.022 366.212"></polygon>
+  <polygon style="stroke-opacity: 0; fill: url(#gradient-1); stroke: url(#gradient-3); stroke-width: 1px; transform-origin: 341.743px 300.628px 0px;" points="262.956 441.301 420.799 365.07 421.078 159.956 262.408 233.912" transform="matrix(-1, 0, 0, -1, 0, 0)"></polygon>
+  <path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: rgb(51, 170, 227); stroke-width: 2px;" d="M 272.763 163.203 C -72.644 305.072 -53.304 213.938 137.113 110.98"></path>
+  <ellipse style="stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: url(#gradient-9); stroke-width: 1px;" cx="142.238" cy="106.197" rx="13.832" ry="13.549"></ellipse>
+  <path style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0); stroke-width: 1px;" d=""></path>
+  <path style="fill: rgb(216, 216, 216); fill-opacity: 0; stroke: rgb(51, 170, 227); stroke-width: 2px;" d="M 356.002 334.038 C 671.635 142.847 374.848 151.065 294.867 177.381"></path>
+  <polygon style="stroke: rgb(0, 0, 0); stroke-opacity: 0; stroke-width: 1px; fill: url(#gradient-4); transform-origin: 254.189px 358.415px 0px;" points="31.839 193.173 173.6 99.781 147.675 276.976 4.807 368.251" transform="matrix(0.570046, 0.821613, -0.821613, 0.570046, 0, 0)"></polygon>
+  <ellipse style="stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: url(#gradient-10); stroke-width: 1px;" cx="353.646" cy="335.951" rx="13.832" ry="13.549"></ellipse>
+</svg>

@@ -32,9 +32,9 @@ const form = document.getElementById('joinForm');
 form.addEventListener("submit",async (e) =>{
     e.preventDefault(); 
 
-    roomId = document.getElementById("roomId").value
-    username = document.getElementById("username").value;
-
+    const roomId = document.getElementById("roomId").value;
+    const username = document.getElementById("username").value;
+    
     const {token,gameUrl} = await login(roomId, username);
     window.location.href = `${gameUrl}?token=${token}`;
 })

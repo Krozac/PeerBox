@@ -1,11 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Cherry+Bomb+One&display=swap');
 
 :root {
-  --primary-color: #ecafff !important;
-  --secondary-color: #c27ab0 !important;
+  --primary-color: #A252B4 !important;
+  --secondary-color: #6C2F86 !important;
   --background-color: #541e6d !important;
   --background-color-2: #27214d !important;
-  --text-color: #55d7ee !important;
+  --text-color: #c3c7f8 !important; 
   --font-family: 'Cherry Bomb One', Arial, sans-serif !important;
 }
 
@@ -18,12 +18,50 @@
 body {
   font-family: var(--font-family);
   background-color: var(--background-color);
+  background-image:
+    url('../60-lines.png'),
+    radial-gradient(circle at center,
+      var(--secondary-color) 0%,
+      var(--background-color) 100%);
   color: var(--text-color);
   height: 100vh;
 }
 
+.peerbox-icon-background{
+  background-image:url('../peerbox.svg');
+  width : 100%;
+  height: 100% ;
+  background-repeat: no-repeat;
+  opacity: .03;
+  filter: brightness(3);
+  background-position: center;
+  position:absolute;
+  z-index:-1;
+}
+
+.pb-bubbles-button {
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+  border: none;
+  border-radius: 5px;
+  width: auto;
+  height: auto;
+  padding: 10px;
+  margin-top:10px;  
+  font-family: var(--font-family);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#svg{
+  margin-left:50%;
+  width:100px;
+  transform:translateX(-50%);
+}
+
 .pb-bubbles-form-input {
-  width: 100%;
+  width: 90%;
   padding: 10px;
   border: 1px solid var(--primary-color);
   border-radius: 5px;
@@ -200,8 +238,11 @@ body {
   align-items: center;
   margin-top: 20px;
   background-color: var(--background-color-2);
+  box-shadow: 0 1px 0 var(--secondary-color), 0 2px 0 var(--secondary-color), 0 3px 0 var(--secondary-color), 0 4px 0 var(--secondary-color), 0 5px 0 var(--secondary-color), 0 6px 0 var(--secondary-color), 0 7px 0 var(--secondary-color), 0 8px 0 var(--secondary-color), 0 0 5px rgba(10, 0, 0, .05), 0 1px 3px rgba(10, 0, 0, .2), 0 3px 5px rgba(10, 0, 0, .2), 0 5px 10px rgba(10, 0, 0, .2), 0 10px 10px rgba(10, 0, 0, .2), 0 20px 20px rgba(10, 0, 0, .3);
   width: 500px;
-  height: 50%;
+  height: auto;
+  padding:25px;
+  border-radius: 15px;
   margin: 0 auto;
 }
 

@@ -1,25 +1,25 @@
 //assets
 
-const blue_triangle = '/models/blue_triangle.svg';
-const green_square = '/models/green_square.svg';
-const orange_pentagon = '/models/orange_pentagon.svg';
-const pink_cross = '/models/pink_cross.svg';
-const purple_star = '/models/purple_star.svg';
-const red_circle = '/models/red_circle.svg';
-const teal_diamond = '/models/teal_diamond.svg';
-const yellow_hexagon = '/models/yellow_hexagon.svg';
+import blue_triangle from './models/client/blue_triangle.svg';
+import green_square from './models/client/green_square.svg';
+import orange_pentagon from './models/client/orange_pentagon.svg';
+import pink_cross from './models/client/pink_cross.svg';
+import purple_star from './models/client/purple_star.svg';
+import red_circle from './models/client/red_circle.svg';
+import teal_diamond from './models/client/teal_diamond.svg';
+import yellow_hexagon from './models/client/yellow_hexagon.svg';
 
-const newmessage_sound = '/sounds/plopp-84863.mp3';
+import newmessage_sound from './sounds/plopp-84863.mp3';
 
 export const models = {
-    blue_triangle,
-    green_square,
-    orange_pentagon,
-    pink_cross,
-    purple_star,
-    red_circle,
-    teal_diamond,
-    yellow_hexagon,
+  blue: blue_triangle,
+  green: green_square,
+  orange: orange_pentagon,
+  pink: pink_cross,
+  purple: purple_star,
+  red: red_circle,
+  teal: teal_diamond,
+  yellow: yellow_hexagon,
 };
 
 export const sounds = {

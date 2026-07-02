@@ -12,9 +12,7 @@ export default defineConfig({
       }
     }
   },
-  resolve: {
-    alias: {
-      peerbox: path.resolve(__dirname, '../../dist/framework/index.js')
-    }
+  optimizeDeps: {
+    exclude: ["peerbox"]
   }
 });

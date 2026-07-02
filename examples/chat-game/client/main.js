@@ -1,10 +1,10 @@
-import * as Peerbox from '../../../framework/dist/index.js';
-import Client from '../../../framework/dist/client.js';
+import * as Peerbox from "peerbox";
+import { createClient } from "peerbox/browser";
 
 import { ChatScene } from './scenes/chatScene.js';
 import { env } from "./clientEnv.js";
-import { SyncSystem } from '../../../framework/dist/index.js';
-import { Utils } from '../../../framework/dist/index.js';
+
+import VoicePlugin from "peerbox-voice";
 
 let params = new URLSearchParams(document.location.search)
 const token = params.get("token")
@@ -16,36 +16,91 @@ let roomId;
 import signal1 from './assets/models/signal/signal1.svg';
 import signal2 from './assets/models/signal/signal2.svg';
 import signal3 from './assets/models/signal/signal3.svg';
-import { HtmlRenderComponent } from '../../../framework/src/ecs/components/HtmlRenderComponent.js';
-import { GravityComponent } from '../../../framework/src/ecs/components/GravityComponent.js';
+
+
+import { SweepRightTransition, SweepLeftTransition } from './transitions/sweep.js';
 
 const signals = [signal1, signal2, signal3];
 
 async function bootstrap() {
 
-  Utils.LoadingOverlay.show("Connecting to host...");
+  Peerbox.Utils.LoadingOverlay.show("Connecting to host...",document.getElementById("game-root"));
 
   const token = params.get("token")
   if (!token) window.location.href = `http://127.0.0.1:8080/`;
 
   // 1. networking
-  const client = new Client({ signalingUrl: "ws://localhost:5501" });
+  const client = createClient({
+    url: "ws://localhost:5501",
+    username: localStorage.getItem("username"),
+    rtcConfiguration: {
+        iceServers: [
+            // STUN (optional on LAN, but harmless)
+            { urls: "stun:stun.l.google.com:19302" },
+
+            // YOUR LOCAL TURN SERVER
+            {
+            urls: [
+                "turn:192.168.1.15:3478?transport=udp",
+                "turn:192.168.1.15:3478?transport=tcp"
+            ],
+            username: "webrtc",
+            credential: "webrtc123"
+            }
+        ]
+    },
+    plugins: [VoicePlugin()],
+  });
+  console.log("plugins : ",client.plugins.getPlugin("voice"))
+
+  const audioMap = new Map();
+
+  client.peer.on("track", ({ stream, clientId }) => {
+    if (audioMap.has(clientId)) return;
+
+    const audio = document.createElement("audio");
+    audio.autoplay = true;
+    audio.playsInline = true;
+    audio.controls = true;
+
+    audio.srcObject = stream;
+    console.log("Tracks:", stream.getTracks());
+
+    console.log("Audio tracks:", stream.getAudioTracks());
+    document.body.appendChild(audio);
+    audioMap.set(clientId, audio);
+
+    audio.onloadedmetadata = async () => {
+      try {
+        await audio.play();
+        console.log("Audio playing for", clientId);
+      } catch (e) {
+        console.error("Audio play failed:", e);
+      }
+    };
+  });
+
   await client.connect();
-  client.signaling.send("join", { token,clientId : localStorage.getItem('clientId') || null});
 
-  client.signaling.on("join-accepted", async (msg) => {
+  client.server.send("join", { token,userId : localStorage.getItem('clientId') || null});
+
+  client.server.on("join-accepted", async (msg) => {
     console.log(`✅ Joined ${msg.roomId} as ${msg.username}`);
-
+    console.log(msg)
+    
     username = msg.username;
     roomId = msg.roomId;
     console.log(msg)
+    client.id = msg.userId;
+    await client.plugins.getPlugin("voice").enableMicrophone();
 
-    if (msg.clientId) {
-      localStorage.setItem("clientId", msg.clientId);
+
+    if (msg.userId) {
+      localStorage.setItem("clientId", msg.userId);
     }
 
   });
-  client.peerConnection.on("connected", async () => {
+  client.on("connected", async () => {
     console.log("✅ Connected to host, starting ECS...");
 
     // 2. ECS world
@@ -56,11 +111,25 @@ async function bootstrap() {
 
     world.registerSystem(Peerbox.Systems.ParticleSystem)
     world.registerSystem(Peerbox.Systems.ParticleMovementSystem)
+    world.registerSystem(Peerbox.Systems.ToastSystem);
     
-    const sync = new SyncSystem({world, network:client, isHost:false});
+    const sync = new Peerbox.SyncSystem({world, network:client, isHost:false});
 
-    const scenes = new Peerbox.SceneManager("#scene-container",{loading:true, loadingDelay:120});
+    const transitions = new Peerbox.TransitionManager();
+    transitions.register("bubbles-sweep-right",SweepRightTransition);
+    transitions.register("bubbles-sweep-left",SweepLeftTransition);
+
+    const scenes = new Peerbox.SceneManager("#scene-container",{loading:true, loadingDelay:120, transitionManager:transitions});
+    //inject title helper 
+    scenes.setTitle = (title) =>{
+      let titledom = document.getElementById("sceneTitle");
+      if (!titledom) return;
+      titledom.innerHTML = title;
+    }
+
     await scenes.load(ChatScene,{world , sync ,client});
+
+    sync.onAction("users-state",(payload) => { reconcileUsers(payload.payload,world) }, {key:"client-users-state"});
 
     let fpsEl = document.getElementById("status-fps");
     let smoothedFps = 60;
@@ -124,160 +193,51 @@ async function bootstrap() {
      world.on("entityRemoved", () =>{
       document.getElementById("status-entity").innerHTML = "E:"+world.entities.size;
     })
-/*
-    let emitterEntity = world.createEntity();
 
-    world.addComponent(emitterEntity,Peerbox.Components.PositionComponent,{x:900,y:500})
-
-
-    world.addComponent(emitterEntity, Peerbox.Components.ParticleEmitterComponent, {
-      rate: 5,
-      maxParticles: 100,  
-      active:true,
-      timeSinceLast:0,
-      spawnParticle: (world, emitter) => {
-        const emitterPos = world.getComponent(emitterEntity, Peerbox.Components.PositionComponent);
-        const id = world.createEntity();
-
-        world.addComponent(id,Peerbox.Components.ParticleTag);
-        
-
-        //this is a kinematic and will overwrite any physics movement (gravity, velocity, etc...)
-        world.addComponent(id,Peerbox.Components.MovementPatternComponent,{
-          type: "spiral",
-          params: {
-            angularSpeed: 1,      // radians per second
-            radiusGrowth: 25,     // units per second outward
-            originX:emitterPos.x,
-            originY:emitterPos.y,
-          }
-        })
-        world.addComponent(id, Peerbox.Components.PositionComponent, { x: emitterPos.x, y: emitterPos.y });
-        world.addComponent(id, Peerbox.Components.LifetimeComponent, { value: 15, age: 0 });
-        world.addComponent(id,Peerbox.Components.HtmlRenderComponent,
-        {
-          parentSelector: "#game-root",
-          tagName: "div",
-          classes: [
-            "particle-dot"
-          ],
-          html: ``,
-        })
-      
-      },
-    });
-
-    let emitterEntity2 = world.createEntity();
-    world.addComponent(emitterEntity2,Peerbox.Components.PositionComponent,{x:1200,y:500})
-    world.addComponent(emitterEntity2, Peerbox.Components.ParticleEmitterComponent, {
-      rate: 5,
-      maxParticles: 100,  
-      active:true,
-      timeSinceLast:0,
-      spawnParticle: (world, emitter) => {
-        const emitterPos = world.getComponent(emitterEntity2, Peerbox.Components.PositionComponent);
-        const id = world.createEntity();
-
-        world.addComponent(id,Peerbox.Components.ParticleTag);
-        
-
-        //this is a kinematic and will overwrite any physics movement (gravity, velocity, etc...)
-        world.addComponent(id,Peerbox.Components.MovementPatternComponent,{
-          type: "wave",
-          params: {
-            speedX: 100,      // radians per second
-            frequency: 5,     // units per second outward
-            amplitude:50,
-            originX:emitterPos.x,
-            originY:emitterPos.y,
-          }
-        })
-        world.addComponent(id, Peerbox.Components.PositionComponent, { x: emitterPos.x, y: emitterPos.y });
-        world.addComponent(id, Peerbox.Components.LifetimeComponent, { value: 15, age: 0 });
-        world.addComponent(id,Peerbox.Components.HtmlRenderComponent,
-        {
-          parentSelector: "#game-root",
-          tagName: "div",
-          classes: [
-            "particle-dot-1"
-          ],
-          html: ``,
-        })
-      
-      },
-    });
-
-
-
-let burstEmitterEntity = world.createEntity();
-
-// Position for the burst origin
-world.addComponent(burstEmitterEntity, Peerbox.Components.PositionComponent, { x: 500, y: 1000 });
-
-world.addComponent(burstEmitterEntity, Peerbox.Components.ParticleEmitterComponent, {
-    mode: "burst",            // 👈 tells ParticleSystem to use burst behavior
-    active: true,
-    timeSinceLast: 0,
-    burstDelay: 0.8,          // one burst every 0.8 seconds
-    burstCount: 5,           // emit 40 particles per burst
-    maxParticles: 300,        // total cap (used by ParticleSystem)
-    
-    spawnParticle: (world, emitter) => {
-      const emitterPos = world.getComponent(emitter, Peerbox.Components.PositionComponent);
-      const id = world.createEntity();
-
-      world.addComponent(id, Peerbox.Components.ParticleTag);
-      world.addComponent(id, Peerbox.Components.PositionComponent, {
-        x: emitterPos.x,
-        y: emitterPos.y,
-      });
-
-      // Give particles a random velocity or pattern so the burst looks explosive
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 50 + Math.random() * 50;
-      world.addComponent(id, Peerbox.Components.VelocityComponent, {
-        dx: Math.cos(angle) * speed,
-        dy: Math.sin(angle) * speed,
-      });
-
-      world.addComponent(id, Peerbox.Components.LifetimeComponent, { value: 5, age: 0 });
-      world.addComponent(id,Peerbox.Components.GravityComponent,{
-        x:0,
-        y:98.1
-      })
-
-      // Simple HTML render
-      world.addComponent(id, Peerbox.Components.HtmlRenderComponent, {
-        parentSelector: "#game-root",
-        tagName: "div",
-        classes: ["particle-dot-2"],
-        html: "",
-      });
-    },
-  });
-    */
-
-  
 
     document.getElementById("room-id").innerHTML = roomId;
+    document.getElementById("copyRoomIdBtn").addEventListener("click", () => {
+      navigator.clipboard.writeText(roomId).then(() => {
+        window.dispatchEvent(new CustomEvent("toast", {
+          detail: {
+            message: "Room ID copied to clipboard!",
+            duration: 2, // seconds
+            type: "success"
+          }
+          
+        }));
+      }).catch(err => {
+        console.error("Failed to copy Room ID: ", err);
+      });
+    });
 
     //intro got back
 
-    client.peerConnection.on("join-ack", ({ userEntityId, username }) => {
+    client.on("join-ack", ({ userEntityId, userList, username }) => {
       console.log(`Joined as ${username}, entity = ${userEntityId}`);
 
 
       document.getElementById("status-client").innerHTML=userEntityId;
-      world.clientEntityId = userEntityId;
-      client.userEntityId = userEntityId;
+      console.log("Existing users in the room:", userList);
+     
+
+      console.log(world.getEntities());
+
+      world.clientEntityId = userEntityId;   // ECS id
+      client.entityId = userEntityId;        // same ECS id
+
       client.username = username;
     });
 
     // ✅ Now it’s safe to announce yourself
-    client.peerConnection.send({ type: "intro", username });
+    client.send({
+        type: "intro",
+        payload: { username }
+      });
 
-    Utils.LoadingOverlay.hide();
+    Peerbox.Utils.LoadingOverlay.hide();
   });
+
 }
 
 let currentScale = 1;
@@ -300,16 +260,47 @@ function resizeGameRoot() {
   const offsetX = (window.innerWidth - targetWidth * scale) / 2;
   const offsetY = (window.innerHeight - targetHeight * scale) / 2;
 
-  root.style.transform = `scale(${scale})`;
   root.style.position = "absolute";
-  root.style.left = `${offsetX}px`;
-  root.style.top = `${offsetY}px`;
-
+  root.style.transformOrigin = "top left";
+  root.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+  
   // store for coordinate conversion
   currentScale = scale;
   currentOffsetX = offsetX;
   currentOffsetY = offsetY;
 }
+
+function reconcileUsers(users, world) {
+  let existingUsers = new Set(world.getEntitiesWithComponent(Peerbox.Components.userComponent).map(e => world.getComponent(e, Peerbox.Components.userComponent).id));
+
+  users.forEach(user => {
+    if (!existingUsers.has(user.id)) {
+      // New user, create entity
+      const entity = world.createEntity();
+      world.addComponent(entity, Peerbox.Components.userComponent, {
+        id: user.id,
+        name: user.name,
+        color: user.color,
+      });
+    } else {
+      existingUsers.delete(user.id); // still exists, remove from set
+    }
+  });
+
+  // Any remaining in existingUsers set are disconnected, remove them
+  existingUsers.forEach(id => {
+    const entity = world.getEntitiesWithComponent(Peerbox.Components.userComponent).find(e => world.getComponent(e, Peerbox.Components.userComponent).id === id);
+    if (entity) {
+      world.entities.delete(entity);
+      world.components.delete(entity);
+    }
+  });
+
+  console.log("Reconciled users. Current user entities:", world.getEntitiesWithComponent(Peerbox.Components.userComponent).map(e => world.getComponent(e, Peerbox.Components.userComponent)));
+
+}
+
+
 
 window.addEventListener("resize", resizeGameRoot);
 resizeGameRoot();

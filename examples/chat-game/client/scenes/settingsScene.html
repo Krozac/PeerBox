@@ -1,17 +1,20 @@
 <div class="pb-bubbles-settings-container">
-  <h2 class="pb-bubbles-title">Settings</h2>
-
   <!-- Resolution selector -->
-  <label for="resolutionSelect" class="pb-bubbles-label">Resolution:</label>
-  <select id="resolutionSelect" class="pb-bubbles-select">
-    <option value="1920x1080">1920x1080</option>
-    <option value="1600x900">1600x900</option>
-    <option value="1280x720">1280x720</option>
-  </select>
+  <div class="pb-bubbles-settings-item">
+    <label for="resolutionSelect" class="pb-bubbles-label">Resolution:</label>
+    <select id="resolutionSelect" class="pb-bubbles-button">
+    </select>
+  </div>
+  
+    <p id="resolutionHint" class="pb-bubbles-hint"></p>
 
   <!-- Fullscreen toggle -->
-  <button id="fullscreenBtn" class="pb-bubbles-settings-btn">Toggle Fullscreen</button>
+  <div class="pb-bubbles-settings-item">
+    <label for="resolutionSelect" class="pb-bubbles-label">Fullscreen:</label>
+    <button id="fullscreenBtn" class="pb-bubbles-button">Toggle Fullscreen</button>
+  </div>
 
   <!-- Back button -->
-  <button id="backBtn" class="pb-bubbles-settings-btn">Back</button>
+   
+  <button id="backBtn" class="pb-bubbles-button">Back</button>
 </div>

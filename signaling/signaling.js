@@ -5,8 +5,9 @@ const startApi = require('./api');
 const generateRoomId = require('./utils/generateRoomId');
 const { v4: uuidv4 } = require('uuid');
 
-const rooms = {};
+const rooms = {}; // { roomId: { host: WebSocket, clients: Map<userId, WebSocket>, gameId: string } }
 const wss = new WebSocket.Server({ port: config.server.port });
+const pendingDisconnects = new Map(); // userId -> timeout
 
 /* ======================
    HANDLERS
@@ -17,17 +18,17 @@ function handleCreate(ws, data) {
     roomId = generateRoomId();
   } while (rooms[roomId]);
 
-  rooms[roomId] = { host: ws, clients: [], gameId: data?.gameId || null };
+  rooms[roomId] = { host: ws, clients: new Map(), gameId: data?.gameId || null };
 
-  const clientId = uuidv4();
+  const userId = uuidv4();
   ws.role = 'host';
   ws.roomId = roomId;
-  ws.clientId = clientId;
+  ws.userId = userId;
 
   ws.send(JSON.stringify({ 
     type: 'room-created', 
     roomId, 
-    clientId, 
+    userId, 
     gameId: data?.gameId || null 
   }));
 }
@@ -39,13 +40,16 @@ function handleHostDisconnect(data) {
   }
 }
 
-function handleClientDisconnect(ws, data) {
+function handleClientDisconnect(ws, data) { // intentional disconnect client sent this before closing connection
   if (data.roomId && rooms[data.roomId]) {
+
+    const userId = ws.userId;
     const room = rooms[data.roomId];
-    room.clients = room.clients.filter(client => client !== ws);
-    console.log(
-      `Client left room ${data.roomId}. ${room.clients.length} client(s) remain.`
-    );
+
+    room.clients.delete(userId);
+
+    room.host.send(JSON.stringify({ type: 'peer-left', userId }));
+    console.log(`Client ${userId} intentionally left room ${data.roomId}. ${room.clients.size} client(s) remain.`);
   }
 }
 
@@ -59,24 +63,36 @@ async function handleJoin(ws, data) {
   if (!room) return;
 
   // Try to reuse existing ID if provided
-  let clientId = data.clientId || uuidv4();
+  let userId = data.userId || uuidv4();
+  let connectionId = uuidv4();
 
-  // Check if reconnecting (same clientId)
-  const existing = room.clients.find(c => c.clientId === clientId);
-  if (existing) {
-    console.log(`[Client] Reconnecting ${clientId} (${username})`);
-    existing.close(); // Clean up old socket if still around
-    room.clients = room.clients.filter(c => c !== existing);
+  // Check if reconnecting (same userId)
+  const reconnectTimeout = pendingDisconnects.get(userId);
+  const isReconnect = !!reconnectTimeout;
+
+  console.log(data);
+  console.log(`User ${username} (${userId}) is joining room ${roomId} ${isReconnect ? '(reconnecting)' : ''}`);
+
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+    pendingDisconnects.delete(userId);
   }
 
   // Register new socket
   ws.role = 'client';
   ws.roomId = roomId;
-  ws.clientId = clientId;
-  room.clients.push(ws);
+  ws.userId = userId;
+  ws.connectionId = connectionId;
 
-  room.host.send(JSON.stringify({ type: 'new-peer', clientId, username }));
-  ws.send(JSON.stringify({ type: 'join-accepted', roomId, clientId, username }));
+  room.clients.set(userId, ws);
+
+  room.host.send(JSON.stringify({
+    type: isReconnect ? 'peer-reconnected' : 'new-peer',
+    userId,
+    username
+  }));
+  
+  ws.send(JSON.stringify({ type: 'join-accepted', roomId, userId, username }));
 }
 
 
@@ -85,18 +101,20 @@ function handleSignal(ws, data) {
   if (!room) return;
 
   const signalingMessage = data.payload;
-  console.log(signalingMessage)
-  const targetClientId = signalingMessage.target;
 
-  if (targetClientId === 'host') {
+  const targetUserId = signalingMessage.target;
+
+  console.log(`Signaling message from ${ws.userId} to ${targetUserId}:`, signalingMessage);
+
+  if (targetUserId === 'host') {
     room.host.send(
-      JSON.stringify({ type: 'signal', payload: signalingMessage, from: ws.clientId })
+      JSON.stringify({ type: 'signal', payload: signalingMessage, from: ws.userId })
     );
   } else {
-    const targetClient = room.clients.find(c => c.clientId === targetClientId);
+    const targetClient = room.clients.get(targetUserId);
     if (targetClient) {
       targetClient.send(
-        JSON.stringify({ type: 'signal', payload: signalingMessage, from: ws.clientId })
+        JSON.stringify({ type: 'signal', payload: signalingMessage, from: ws.userId })
       );
     }
   }
@@ -118,7 +136,6 @@ wss.on('connection', (ws) => {
       return;
     }
 
-    console.log(data.type);
     switch (data.type) {
       case 'create':
         handleCreate(ws,data);
@@ -150,11 +167,27 @@ wss.on('connection', (ws) => {
     if (role === 'host') {
       delete rooms[roomId];
       console.log(`[Room ${roomId}] deleted (host disconnected)`);
-    } else if (role === 'client') {
-      room.clients = room.clients.filter(client => client !== ws);
-      room.host.send(JSON.stringify({ type: 'peer-left', clientId: ws.clientId }));
+    } else if (role === 'client') { // disconnection could be temporary, wait a bit before notifying host and removing from room
+
+      const userId = ws.userId;
+
+      const timeout = setTimeout(() => {
+        room.clients.delete(userId);
+
+        room.host.send(JSON.stringify({ type: 'peer-left', userId: ws.userId }));
+
+        pendingDisconnects.delete(userId);
+
+        console.log(
+          `Client ${userId} disconnected from room ${roomId}. ${room.clients.size} client(s) remain.`
+        );
+      }, config.reconnectGracePeriod);  
+
+      pendingDisconnects.set(userId, timeout);
+
+      room.host.send(JSON.stringify({ type: 'peer-disconnected', userId: ws.userId }));
       console.log(
-        `Client left room ${roomId}. ${room.clients.length} client(s) remain.`
+        `Client ${userId} temporarily disconnected from room ${roomId}. Waiting for reconnection...`
       );
     }
   });

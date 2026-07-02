@@ -11,5 +11,6 @@ module.exports = {
   games:{
     "afbebc9d-9d21-4284-9317-cb0b6daec6a6":'http://localhost:5173'
   },
-  SECRET:"super-secret"
+  SECRET:"super-secret",
+  reconnectGracePeriod: 120000, // 2 minutes
 };

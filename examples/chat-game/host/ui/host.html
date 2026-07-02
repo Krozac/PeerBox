@@ -2,23 +2,22 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="../../../../framework/styles/base.css" />
-  <link rel="stylesheet" href="../../../../framework/styles/themes/bubbles.css" />
+  <link rel="stylesheet" href="./host.css"/>
 </head>
 <body>
-  <h1 class="pb-title">PeerBox</h1>
-
-  <form id="hostForm" class="pb-chat-join-form">
+  <div class="peerbox-icon-background" id=""></div>
+  <h1 class="pb-bubbles-title">PeerBox</h1>
+  <form id="hostForm" class="pb-bubbles-chat-join-form">
     <label for="username">Username:</label>
     <input 
       type="text" 
-      class="pb-form-input" 
+      class="pb-bubbles-form-input" 
       id="username" 
       name="username" 
       required  
       placeholder="Enter username" 
     />
-    <button type="submit" id="createRoom" class="pb-chat-submit">Create Room</button>
+    <button type="submit" id="createRoom" class="pb-bubbles-button">Create Room</button>
   </form>
 
   <script>

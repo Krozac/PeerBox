@@ -3,16 +3,26 @@
 :root {
   --primary-color: #ecafff !important;
   --secondary-color: #c27ab0 !important;
+  --secondary-color-2: #493e8f !important;
   --background-color: #541e6d !important;
   --background-color-2: #27214d !important;
   --text-color: #faf6e7 !important;
   --font-family: 'Cherry Bomb One', Arial, sans-serif !important;
+  --z-scene: 0;
+  --z-transition: 2000;
+  --z-loading: 1000;
+  --z-debug: 3000;
 }
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+
+#pb-framework-loading-overlay{
+  z-index:var(--z-loading) !important;
 }
 
 body {
@@ -57,7 +67,6 @@ body {
 /* Chat container */
 .pb-bubbles-chat-container {
   position: relative;
-  width: 45%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -92,6 +101,11 @@ body {
   padding: 10px 10px 40px 10px;
   border-radius: 10px;
   background-color: var(--background-color-2);
+  background : 
+    url('../absurdity.png'),
+    radial-gradient(circle at center, var(--secondary-color-2) 0%, var(--background-color-2) 100%);
+    
+  background-size: 15px 15px, cover;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
@@ -148,14 +162,14 @@ body {
 .pb-bubbles-chat-message--other::after {
   content: "";
   position: absolute;
-  left: -9px;
+  left: -8px;
   top: 15px;
   width: 0;
   height: 0;
   border-top: 10px solid transparent;
   border-bottom: 10px solid transparent;
   border-right: 16px solid var(--secondary-color);
-  rotate: -35deg;
+  rotate: -30deg;
 }
 
 /* Chat form */
@@ -232,8 +246,7 @@ body {
   color: var(--text-color);
   border: none;
   border-radius: 5px;
-  width: 50px;
-  height: 50px;
+  padding:5px;
   font-family: var(--font-family);
   font-size: 1.2rem;
   cursor: pointer;
@@ -244,6 +257,25 @@ body {
   width: 50px;
   height: 50px;
   filter:invert(1);
+}
+
+.pb-bubbles-settings-container{
+  display:flex;
+  flex-direction: column;
+  width:30%;
+  margin:auto;
+  top:150px;
+  position:absolute;
+  left:50%;
+  transform: translateX(-50%);
+}
+
+.pb-bubbles-settings-item{
+  width:100%;
+  justify-content: space-between;
+  display: flex;
+  margin-top:10px;
+  margin-bottom:10px;
 }
 
 /* Leave/Close buttons */
@@ -265,8 +297,7 @@ body {
 /* User list */
 .pb-bubbles-user-list-container {
   overflow: hidden;
-  width: 20%;
-  background-color: var(--background-color-2);
+
 }
 
 .pb-bubbles-user-list {
@@ -301,6 +332,10 @@ body {
                -1px 1px 0 #000,
                1px 1px 0 #000;
   margin-bottom: 5px;
+  position:absolute;
+  top:-10px;
+  width:100px;
+  text-align: center;
   z-index: 1;
   text-transform: uppercase;
 }
@@ -358,10 +393,25 @@ body {
   width: 1920px;
   height: 1080px;
   background-color: var(--background-color);
-  background: radial-gradient(circle at center, var(--secondary-color) 0%, var(--background-color) 100%);
+  background-image:
+    url('../60-lines.png'),
+    radial-gradient(circle at center,
+      var(--secondary-color) 0%,
+      var(--background-color) 100%);
+
   overflow: hidden;
 
   transform-origin: top left; 
+}
+
+.peerbox-icon-background{
+  background-image:url('../peerbox.svg');
+  width : 100%;
+  height: 100% ;
+  background-repeat: no-repeat;
+  opacity: .03;
+  filter: brightness(3);
+  background-position: center;
 }
 
 

@@ -1,6 +1,7 @@
 function ChatMessageComponent(){
     from, //user entity id
-    text
+    text,
+    timestamp
 }
 
 module.exports = {ChatMessageComponent}

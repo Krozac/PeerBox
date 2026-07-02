@@ -1,5 +1,13 @@
-import { Scene } from "../../../../framework/dist/index.js";
+import { Scene } from "peerbox";
 import { env } from "../clientEnv.js";
+
+
+const resolutions = [
+  "1920x1080",
+  "1600x900",
+  "1280x720",
+  "900x900"
+];
 
 
 export const SettingsScene = new Scene({
@@ -8,19 +16,64 @@ export const SettingsScene = new Scene({
   onLoad: ({world, client}, sceneManager) => {
     console.log("Settings loaded");
 
+    sceneManager.setTitle("Settings");
+
     // Handle resolution changes
     const resolutionSelect = document.getElementById("resolutionSelect");
-    if (resolutionSelect) {
-      resolutionSelect.addEventListener("change", (e) => {
-        const [width, height] = e.target.value.split("x").map(Number);
-        console.log(`Resolution changed to ${width}x${height}`);
-        // Emit custom event or IPC for electron
-        console.log(env.window)
-        if (env?.window?.resize) {
-          env.window.resize(width, height);
-        }
-      });
+    const resolutionHint = document.getElementById("resolutionHint");
+
+    const nativeRes = `${screen.width}x${screen.height}`;
+
+    if (!resolutions.includes(nativeRes)) {
+      resolutions.unshift(nativeRes);
     }
+
+    resolutionSelect.innerHTML = "";
+
+    for (const res of resolutions) {
+      const option = document.createElement("option");
+
+      option.value = res;
+
+      if (res === nativeRes) {
+        option.textContent = `${res} (Native)`;
+      } else {
+        option.textContent = res;
+      }
+
+      resolutionSelect.appendChild(option);
+    }
+
+    
+    const savedResolution = localStorage.getItem("selectedResolution") || "1920x1080";
+    
+    resolutionSelect.value = savedResolution;
+
+    function updateResolutionHint(value) {
+      const [w, h] = value.split("x").map(Number);
+
+      const ratio = w / h;
+      const is16by9 = Math.abs(ratio - (16 / 9)) < 0.02;
+
+      resolutionHint.textContent = is16by9
+        ? ""
+        : "This resolution uses a different aspect ratio. Black bars may appear.";
+    }
+
+    resolutionSelect.addEventListener("change", (e) => {
+      const value = e.target.value;
+
+      updateResolutionHint(value);
+
+      localStorage.setItem("selectedResolution", value);
+
+      const [width, height] = value.split("x").map(Number);
+
+      env.window.resize(width, height);
+    });
+
+    
+    updateResolutionHint(resolutionSelect.value);
 
     // Handle fullscreen toggle
     const fullscreenBtn = document.getElementById("fullscreenBtn");
@@ -38,7 +91,7 @@ export const SettingsScene = new Scene({
     const backBtn = document.getElementById("backBtn");
     if (backBtn) {
       backBtn.addEventListener("click", () => {
-        sceneManager.goBack();
+        sceneManager.goBack("bubbles-sweep-left");
       });
     }
   }
