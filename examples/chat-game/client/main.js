@@ -1,5 +1,5 @@
-import * as Peerbox from "peerbox";
-import { createClient } from "peerbox/browser";
+import * as Peerbox from "@peerbox/core";
+import { createClient } from "@peerbox/core/browser";
 import { ChatScene } from "./scenes/chatScene.js";
 import { SweepLeftTransition, SweepRightTransition } from "./transitions/sweep.js";
 import { SIGNALING_URL } from "./networkConfig.js";

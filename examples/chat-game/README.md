@@ -1,6 +1,6 @@
 # PeerBox browser-hosted chat example
 
-This example runs the authoritative PeerBox host in a browser tab. The signaling service keeps room membership and relays WebRTC setup messages; game messages travel over peer data channels.
+This example runs the PeerBox host in a browser tab. The signaling service keeps room membership and relays WebRTC setup messages; game messages travel over peer data channels.
 
 ## Run locally
 
@@ -19,7 +19,7 @@ Open `http://localhost:5173/host.html`, enter a display name, and create a room.
 - `/host.html` — browser host, player view, and compact room controls
 - `/game.html?token=…` — connected player game
 
-The Electron host under `host/` remains as a separate legacy example. It is not required for the browser flow.
+The Electron host under `host/` is a separate example and is not required for the browser flow.
 
 ## Network configuration
 

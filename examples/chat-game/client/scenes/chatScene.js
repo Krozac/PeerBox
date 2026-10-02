@@ -1,4 +1,4 @@
-import { Components, Scene } from "peerbox";
+import { Components, Scene } from "@peerbox/core";
 import { SettingsScene } from "./settingsScene.js";
 import { models } from "../assets/index.js";
 

@@ -1,5 +1,5 @@
-import * as Peerbox from "peerbox";
-import { createHost } from "peerbox/browser";
+import * as Peerbox from "@peerbox/core";
+import { createHost } from "@peerbox/core/browser";
 import { API_URL, SIGNALING_URL } from "./networkConfig.js";
 
 const GAME_ID = "afbebc9d-9d21-4284-9317-cb0b6daec6a6";

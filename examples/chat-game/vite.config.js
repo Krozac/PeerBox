@@ -15,6 +15,6 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    exclude: ["peerbox"]
+    exclude: ["@peerbox/core"]
   }
 });

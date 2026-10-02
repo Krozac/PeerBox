@@ -4,8 +4,8 @@ const path = require("path");
 const { randomUUID } = require("crypto");
 
 // Framework host
-const PeerBox = require("peerbox");
-const { createHost } = require("peerbox/node");
+const PeerBox = require("@peerbox/core");
+const { createHost } = require("@peerbox/core/node");
 const { ChatMessageComponent } = require("./ecs/components/chatMessageComponent.js");
 
 const fs = require("node:fs");

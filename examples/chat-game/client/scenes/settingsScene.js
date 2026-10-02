@@ -1,4 +1,4 @@
-import { Scene } from "peerbox";
+import { Scene } from "@peerbox/core";
 import { env } from "../clientEnv.js";
 
 

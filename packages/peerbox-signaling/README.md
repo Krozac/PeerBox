@@ -1,22 +1,36 @@
-# @peerbox/signaling
+﻿# @peerbox/signaling
 
-Composable signaling server pieces for PeerBox. The package is independent of the PeerBox client and can be used as a complete WebSocket/HTTP service or as a source of the shared protocol constants.
+`@peerbox/signaling` is an optional WebSocket and HTTP signaling server for PeerBox. It manages rooms and relays WebRTC negotiation messages. Game messages travel over peer connections; this service does not make game state authoritative.
+
+## Install
+
+```sh
+npm install @peerbox/signaling
+```
+
+## Start a server
+
+The application supplies its own token format and account checks:
 
 ```js
 const { createSignalingServer } = require("@peerbox/signaling");
+const { tokenise, detokenise } = require("./joinTokens.cjs");
 
-const server = createSignalingServer({
+createSignalingServer({
   port: 5501,
   apiPort: 5502,
   games: { arena: "https://games.example/arena/" },
-  issueJoinToken: ({ roomId, username, account }) => accountService.createRoomInvite({ roomId, username, account }),
-  verifyJoinToken: (token) => accountService.verifyRoomInvite(token),
-  authenticateJoin: ({ claims }) => accountService.canJoin(claims.account, claims.roomId),
+  issueJoinToken: ({ roomId, username }) => tokenise(roomId, username),
+  verifyJoinToken: (token) => detokenise(token),
 });
 ```
 
-`issueJoinToken` and `verifyJoinToken` are required application hooks. This keeps token format, account identity, and authorization under the deploying game's control. `authenticateJoin` is an optional additional check at WebSocket join time. The built-in HTTP API serves `/health`, `/stats`, `/games`, `/rooms/:roomId`, and `/token`; `/token` calls the configured issuer and returns the matching game's URL.
+`issueJoinToken` and `verifyJoinToken` are required. They can connect the server to an existing account system. The optional `authenticateJoin` callback can perform an additional authorization check when a token is used to join.
 
-The returned object exposes `rooms`, `wss`, and `app` for integration and customization, plus `close()` for orderly shutdown. `./protocol` exports the technical client/server message type constants independently. The signaling server routes room membership and WebRTC negotiation messages; it does not validate gameplay or make game state authoritative.
+The HTTP API provides `/health`, `/stats`, `/games`, `/rooms/:roomId`, and `/token`. The token endpoint calls `issueJoinToken` and returns the URL configured for the room's game. Options also include `maxClients`, `hostReconnectGracePeriod`, and `reconnectGracePeriod`.
 
-The existing repository-level `signaling/` application remains the current example deployment. It has not yet been migrated to this package.
+The returned server object exposes `rooms`, `wss`, and `app`, and has a `close()` method. Import protocol constants separately with `@peerbox/signaling/protocol` if you are implementing your own signaling service.
+
+## License
+
+MIT.

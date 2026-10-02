@@ -1,30 +1,57 @@
-<p align="center">
-  <img src="packages/peerbox/dist/peerbox.svg" alt="PeerBox Logo" width="120"/>
-</p>
+﻿# PeerBox
 
-<h1 align="center">PeerBox</h1>
+PeerBox is a JavaScript toolkit for browser and Node.js multiplayer games. It includes an entity-component system and WebRTC peer connections with room signaling, reconnection, and message synchronization.
 
-<p align="center">
-  <strong>A lightweight JavaScript framework that simplifies WebRTC signaling for peer-to-peer multiplayer games.</strong>
-</p>
+The project is in early development. The first public packages are the core framework and the optional signaling server. Voice and video are not included in this release.
 
----
+## Packages
 
-### 🚀 Overview
-**PeerBox** provides an easy-to-use abstraction over WebRTC, letting you focus on gameplay logic instead of complex connection setup.  
-It handles signaling, reconnection, message synchronization, and entity replication — ideal for browser and node-based multiplayer games.
+- `@peerbox/core` contains the ECS and networking client APIs.
+- `@peerbox/signaling` provides a configurable WebSocket and HTTP signaling server.
 
----
+## Install
 
-### 🧩 Features
-- ⚡ Simple **WebRTC signaling** and room management  
-- 🔁 Built-in **reconnection and synchronization** logic  
-- 🧠 **Entity-component system (ECS)** support for structured gameplay  
-- 🖥️ Works seamlessly in **browsers** and **Node/Electron** environments  
-- 🎮 Designed for **real-time multiplayer games**
+```sh
+npm install @peerbox/core
+```
 
----
+To run the included signaling service, install `@peerbox/signaling` as well. You can also use your own signaling service that implements the PeerBox signaling protocol.
 
-### 📦 Installation
-```bash
-Still in WIP
+## Use
+
+In a browser, create a host or client with the signaling server's WebSocket URL:
+
+```js
+import { createClient } from "@peerbox/core/browser";
+
+const inviteToken = "short-lived-token-from-your-game-api";
+const client = createClient({
+  url: "wss://signal.example.com",
+  roomId: "ROOM1",
+  username: "Player",
+});
+
+await client.connect();
+client.server.send("join", { token: inviteToken });
+```
+
+`inviteToken` is issued by your game or signaling API. The signaling service must provide the room and join-token flow expected by the client. See the [chat game example](examples/chat-game/README.md) for a complete local setup.
+
+## Development
+
+From the repository root:
+
+```sh
+npm install
+npm run dev:all
+```
+
+To build the core package, run `npm run build --prefix packages/peerbox` from the repository root.
+
+## Publishing
+
+From the repository root, rehearse the release with `npm run publish:public -- --dry-run`. Run `npm run publish:public` to publish `@peerbox/core` and `@peerbox/signaling` in order. Publishing requires npm credentials and makes both packages public.
+
+## License
+
+PeerBox is distributed under the MIT License. Each published package includes its own copy of the license.

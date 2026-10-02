@@ -1,28 +1,46 @@
 {
-  "name": "peerbox",
-  "version": "1.0.0", 
+  "name": "@peerbox/core",
+  "version": "0.1.0",
+  "description": "JavaScript networking and entity-component tools for multiplayer games",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Krozac/PeerBox.git",
+    "directory": "packages/peerbox"
+  },
+  "homepage": "https://github.com/Krozac/PeerBox#readme",
+  "bugs": { "url": "https://github.com/Krozac/PeerBox/issues" },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "type": "module",  
-  "files": ["dist"],
+  "files": ["dist", "types", "README.md", "LICENSE"],
+  "dependencies": {
+    "ws": "^8.18.3"
+  },
+  "peerDependencies": {
+    "wrtc": "^0.4.7"
+  },
+  "peerDependenciesMeta": {
+    "wrtc": { "optional": true }
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",
       "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
+      "types": "./types/index.d.ts"
     },
     "./browser": {
       "import": "./dist/browser.js",
       "require": "./dist/browser.cjs",
-      "types": "./dist/index.d.ts"
+      "types": "./types/browser.d.ts"
     },
     "./node": {
       "import": "./dist/node.js",
       "require": "./dist/node.cjs",
-      "types": "./dist/index.d.ts"
+      "types": "./types/node.d.ts"
     }
   },
-  "types": "./dist/index.d.ts",
+  "types": "./types/index.d.ts",
   "scripts": {
     "build:esm": "vite build --config vite.config.esm.js",
     "build:cjs": "vite build --config vite.config.cjs.js",
@@ -31,7 +49,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest --watch"
+    "test:watch": "vitest --watch",
+    "prepublishOnly": "npm run build"
 }
   
 

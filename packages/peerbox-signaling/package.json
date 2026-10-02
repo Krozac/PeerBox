@@ -2,6 +2,14 @@
   "name": "@peerbox/signaling",
   "version": "0.1.0",
   "description": "Composable WebRTC signaling server and room management for PeerBox",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Krozac/PeerBox.git",
+    "directory": "packages/peerbox-signaling"
+  },
+  "homepage": "https://github.com/Krozac/PeerBox/tree/main/packages/peerbox-signaling",
+  "bugs": { "url": "https://github.com/Krozac/PeerBox/issues" },
   "main": "./src/index.cjs",
   "module": "./src/index.js",
   "type": "module",
@@ -19,7 +27,7 @@
       "require": "./src/server.cjs"
     }
   },
-  "files": ["src", "README.md"],
+  "files": ["src", "README.md", "LICENSE"],
   "dependencies": {
     "express": "^5.1.0",
     "cors": "^2.8.5",
