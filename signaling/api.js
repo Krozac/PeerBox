@@ -19,11 +19,11 @@ function startApi(rooms, config) {
   app.get('/stats', (req, res) => {
     const roomStats = Object.entries(rooms).map(([roomId, room]) => ({
       roomId,
-      clients: room.clients.length,
+      clients: room.clients.size,
     }));
 
     const totalClients = Object.values(rooms).reduce(
-      (sum, room) => sum + room.clients.length,
+      (sum, room) => sum + room.clients.size,
       0
     );
 
@@ -50,7 +50,7 @@ function startApi(rooms, config) {
 
   res.json({
     roomId,
-    clientCount: room.clients.length,
+    clientCount: room.clients.size,
     maxClients: config.rooms.maxClients,
     gameUrl: config.games[room.gameId] || null,
   });

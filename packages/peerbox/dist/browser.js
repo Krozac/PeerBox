@@ -1,5 +1,5 @@
-import { E as d, S as h, c as l, a as r, p, H as u, b as w, d as f, e as g } from "./pluginRegistry-Dw_gan_d.js";
-class C {
+import { E as u, S as h, c as g, a as l, p as f, H as _, b as m, d as C, e as S, f as p } from "./pluginRegistry-BPXLzCNK.js";
+class I {
   constructor({ server: e, peer: t, plugins: s }) {
     this.server = e, this.peer = t, this.plugins = s;
   }
@@ -17,93 +17,110 @@ class C {
     (t = (e = this.server).disconnect) == null || t.call(e), (i = (s = this.peer).close) == null || i.call(s);
   }
 }
-class m extends d {
-  constructor({ url: e, roomId: t, username: s }) {
-    super(), this.url = e, this.roomId = t, this.username = s, this.ws = null, this._sendQueue = [];
+const d = 1, w = 0;
+class y extends u {
+  constructor({ url: e, roomId: t, username: s, WebSocketImpl: i = globalThis.WebSocket, reconnectDelay: r = 1500 } = {}) {
+    if (super(), !e) throw new TypeError("ClientServer requires a signaling url");
+    if (!i) throw new TypeError("No WebSocket implementation is available");
+    this.url = e, this.roomId = t, this.username = s, this.WebSocketImpl = i, this.reconnectDelay = r, this.ws = null, this._started = !1, this._intentionalClose = !1, this._reconnectTimer = null, this._joinRequest = null, this.userId = null;
   }
   start() {
-    this.ws && this.ws.readyState === WebSocket.OPEN || this._connect();
+    var e;
+    return this._started = !0, this._intentionalClose = !1, ((e = this.ws) == null ? void 0 : e.readyState) === d ? Promise.resolve() : this._connect();
   }
   _connect() {
-    this.ws = new WebSocket(this.url), this.ws.onopen = () => {
-      this.emit("open"), this._flushSendQueue();
-    }, this.ws.onmessage = (e) => {
-      let t;
-      try {
-        t = JSON.parse(e.data);
-      } catch {
-        this.emit("error", new Error("Invalid JSON from signaling server"));
-        return;
-      }
-      switch (t.type) {
-        case h.SIGNAL:
-          this.emit("signal", t.payload);
-          break;
-        case h.HOST_DISCONNECTED:
-          this.emit("host-disconnected");
-          break;
-        default:
-          t.type ? this.emit(t.type, t) : this.emit("unknown-message", t);
-      }
-    }, this.ws.onclose = () => {
-      this.emit("close");
-    }, this.ws.onerror = (e) => {
-      this.emit("error", e);
-    };
+    var t, s;
+    if (!this._started || ((t = this.ws) == null ? void 0 : t.readyState) === d || ((s = this.ws) == null ? void 0 : s.readyState) === w) return this._connecting;
+    clearTimeout(this._reconnectTimer);
+    const e = new this.WebSocketImpl(this.url);
+    return this.ws = e, this._connecting = new Promise((i, r) => {
+      let c = !1;
+      e.onopen = () => {
+        this.ws === e && (c = !0, this._joinRequest && this._sendRaw(this._joinRequest), this.emit("open", { reconnected: !!this._joinRequest }), i());
+      }, e.onmessage = (a) => {
+        if (this.ws !== e) return;
+        let n;
+        try {
+          n = JSON.parse(a.data);
+        } catch {
+          this.emit("error", new Error("Invalid JSON from signaling server"));
+          return;
+        }
+        n.type === h.SIGNAL ? this.emit("signal", n.payload) : n.type === h.HOST_DISCONNECTED ? this.emit("host-disconnected", n) : n.type === h.JOIN_ACCEPTED ? (this.userId = n.userId, this.emit("join-accepted", n)) : n.type === h.ROOM_CLOSED ? this.emit("room-closed", n) : n.type ? this.emit(n.type, n) : this.emit("unknown-message", n);
+      }, e.onclose = (a) => {
+        this.ws === e && (this.ws = null, c || r(new Error("Signaling WebSocket closed before opening")), this.emit("close", a), this._started && !this._intentionalClose && (this.emit("reconnecting"), clearTimeout(this._reconnectTimer), this._reconnectTimer = setTimeout(() => {
+          this._connect().catch((n) => this.emit("error", n));
+        }, this.reconnectDelay)));
+      }, e.onerror = (a) => {
+        this.emit("error", a), c || r(a instanceof Error ? a : new Error("Signaling WebSocket failed to open"));
+      };
+    }), this._connecting;
   }
-  _flushSendQueue() {
-    if (!(!this.ws || this.ws.readyState !== WebSocket.OPEN))
-      for (; this._sendQueue.length; ) {
-        const e = this._sendQueue.shift();
-        this.ws.send(e);
-      }
+  _sendRaw(e) {
+    var t;
+    return ((t = this.ws) == null ? void 0 : t.readyState) !== d ? !1 : (this.ws.send(typeof e == "string" ? e : JSON.stringify(e)), !0);
   }
   send(e, t = {}) {
-    const s = JSON.stringify({ type: e, ...t });
-    this.ws && this.ws.readyState === WebSocket.OPEN ? this.ws.send(s) : this._sendQueue.push(s);
+    const s = { type: e, ...t };
+    return e === h.JOIN && (this._joinRequest = JSON.stringify(s)), this._sendRaw(s) ? !0 : (!this._started && e !== h.JOIN && this.emit("warn", "Signaling socket is not connected"), !1);
   }
   sendSignal(e, t = {}) {
-    this.send("signal", {
-      payload: { target: e, ...t }
-    });
+    return this.send(h.SIGNAL, { payload: { target: e, ...t } });
+  }
+  rejoin() {
+    return this._joinRequest ? this._sendRaw(this._joinRequest) : !1;
   }
   disconnect() {
-    this.ws && (this.send(h.CLIENT_DISCONNECTED, { roomId: this.roomId }), this.ws.close(), this.ws = null);
+    if (this._intentionalClose = !0, this._started = !1, clearTimeout(this._reconnectTimer), !this.ws) return;
+    this.ws.readyState === d && this._joinRequest && this._sendRaw({ type: h.CLIENT_DISCONNECTED, roomId: this.roomId }), this._joinRequest = null, this.userId = null;
+    const e = this.ws;
+    this.ws = null, e.close();
   }
 }
-class S extends d {
-  constructor({ signaling: e, username: t = "Anonymous", rtcConfiguration: s }) {
-    super(), this.signaling = e, this.username = t, this.rtcConfiguration = s, this.pc = null, this.dataChannel = null, this.pendingIceCandidates = [], this._renegotiating = !1, this._pendingRenegotiation = !1, this._setupSignaling();
+class R extends u {
+  constructor({ signaling: e, username: t = "Anonymous", rtcConfiguration: s, rtc: i = globalThis }) {
+    super(), this.signaling = e, this.username = t, this.rtcConfiguration = s, this.rtc = i, this.pc = null, this.dataChannel = null, this.pendingIceCandidates = [], this.signalSessionId = null, this._renegotiating = !1, this._pendingRenegotiation = !1, this._recovering = !1, this._setupSignaling();
   }
   _setupSignaling() {
     this.signaling.on("signal", (e) => this._handleSignal(e)), this.signaling.on("host-disconnected", () => {
       this.emit("host-disconnected");
+    }), this.signaling.on("room-closed", (e) => {
+      this._recovering = !0, this.emit("room-closed", e);
     });
   }
   async connect() {
-    this.pc = new RTCPeerConnection(this.rtcConfiguration), this.pc.onicecandidate = (e) => {
-      e.candidate && this.signaling.sendSignal("host", l(r.ICE_CANDIDATE, { candidate: e.candidate }));
-    }, this.pc.ondatachannel = (e) => {
-      this.dataChannel = e.channel, this._setupDataChannel();
-    }, this.pc.ontrack = (e) => {
-      this.emit("track", {
-        stream: e.streams[0],
-        track: e.track
+    if (this.pc) return;
+    this.pc = new this.rtc.RTCPeerConnection(this.rtcConfiguration ?? {
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+    });
+    const e = this.pc;
+    this.pc.onicecandidate = (t) => {
+      this.pc === e && t.candidate && this.signaling.sendSignal("host", g(l.ICE_CANDIDATE, {
+        candidate: t.candidate,
+        sessionId: this.signalSessionId
+      }));
+    }, this.pc.ondatachannel = (t) => {
+      this.pc === e && (this.dataChannel = t.channel, this._setupDataChannel());
+    }, this.pc.ontrack = (t) => {
+      this.pc === e && this.emit("track", {
+        stream: t.streams[0],
+        track: t.track
       });
     };
   }
   _setupDataChannel() {
     this.dataChannel && (this.dataChannel.onopen = () => {
-      this.emit("connected");
+      this._recovering = !1, this.emit("connected");
     }, this.dataChannel.onmessage = (e) => {
-      const t = p(e.data);
+      const t = f(e.data);
       if (console.log(t), !t) return;
       const s = t.type || "default";
-      console.log(s), this.emit(s, t), t.type === r.HOST_DISCONNECTED && this.emit("host-disconnected");
+      console.log(s), this.emit(s, t), t.type === l.HOST_DISCONNECTED && this.emit("host-disconnected");
     }, this.dataChannel.onerror = (e) => {
       this.emit("error", e);
     }, this.dataChannel.onclose = () => {
-      this.emit("disconnected");
+      var e, t;
+      this.emit("disconnected"), this._recovering || (this._recovering = !0, (t = (e = this.signaling).rejoin) == null || t.call(e));
     });
   }
   async _handleSignal(e) {
@@ -112,27 +129,34 @@ class S extends d {
       return;
     }
     switch (e.type) {
-      case r.OFFER:
+      case l.OFFER:
         try {
-          await this.pc.setRemoteDescription(new RTCSessionDescription(e.sdp));
-          for (const s of this.pendingIceCandidates)
+          e.reconnect && this.pc && (this._closePeerConnection(), this.pc = null, await this.connect()), this.signalSessionId && e.sessionId && this.signalSessionId !== e.sessionId && (this.pendingIceCandidates = []), this.signalSessionId = e.sessionId ?? null, await this.pc.setRemoteDescription(new this.rtc.RTCSessionDescription(e.sdp));
+          const t = this.pendingIceCandidates.filter(
+            (i) => !i.sessionId || !this.signalSessionId || i.sessionId === this.signalSessionId
+          );
+          for (const { candidate: i } of t)
             try {
-              await this.pc.addIceCandidate(s);
-            } catch (i) {
-              this.emit("error", i);
+              await this.pc.addIceCandidate(i);
+            } catch (r) {
+              this.emit("error", r);
             }
           this.pendingIceCandidates = [];
-          const t = await this.pc.createAnswer();
-          await this.pc.setLocalDescription(t), this.signaling.sendSignal("host", l(r.ANSWER, { sdp: this.pc.localDescription }));
+          const s = await this.pc.createAnswer();
+          await this.pc.setLocalDescription(s), this.signaling.sendSignal("host", g(l.ANSWER, {
+            sdp: this.pc.localDescription,
+            sessionId: this.signalSessionId
+          }));
         } catch (t) {
           this.emit("error", t);
         }
         break;
-      case r.ICE_CANDIDATE:
+      case l.ICE_CANDIDATE:
         if (e.candidate)
           try {
-            const t = new RTCIceCandidate(e.candidate);
-            this.pc.remoteDescription ? await this.pc.addIceCandidate(t) : (this.pendingIceCandidates ?? (this.pendingIceCandidates = []), this.pendingIceCandidates.push(t));
+            if (this.signalSessionId && e.sessionId && e.sessionId !== this.signalSessionId) break;
+            const t = new this.rtc.RTCIceCandidate(e.candidate);
+            this.pc.remoteDescription ? await this.pc.addIceCandidate(t) : this.pendingIceCandidates.push({ candidate: t, sessionId: e.sessionId ?? null });
           } catch (t) {
             this.emit("error", t);
           }
@@ -140,6 +164,26 @@ class S extends d {
       default:
         this.emit("warn", `Unknown signal type from host: ${e.type}`);
     }
+  }
+  _closePeerConnection() {
+    if (this.dataChannel) {
+      this.dataChannel.onopen = null, this.dataChannel.onclose = null, this.dataChannel.onmessage = null, this.dataChannel.onerror = null;
+      try {
+        this.dataChannel.close();
+      } catch {
+      }
+    }
+    if (this.pc) {
+      this.pc.onicecandidate = null, this.pc.ondatachannel = null, this.pc.ontrack = null;
+      try {
+        this.pc.close();
+      } catch {
+      }
+    }
+    this.dataChannel = null, this.pendingIceCandidates = [], this.signalSessionId = null;
+  }
+  close() {
+    this._closePeerConnection(), this.pc = null;
   }
   send(e) {
     var s;
@@ -162,8 +206,9 @@ class S extends d {
         const e = await this.pc.createOffer();
         await this.pc.setLocalDescription(e), console.log("Renegotiation offer created and set as local description:", e), this.signaling.sendSignal(
           "host",
-          l(r.OFFER, {
-            sdp: this.pc.localDescription
+          g(l.OFFER, {
+            sdp: this.pc.localDescription,
+            sessionId: this.signalSessionId
           })
         );
       } finally {
@@ -172,15 +217,13 @@ class S extends d {
     }
   }
 }
-function _(n) {
-  var a;
-  const e = new u(n), t = new w({
+function T(o) {
+  var c;
+  const e = new _(o), t = new m({
     hostServer: e,
     rtc: globalThis,
-    rtcConfiguration: n.rtcConfiguration
-  }), s = new HostReconnectManager({
-    peers: t
-  }), i = g(), o = {
+    rtcConfiguration: o.rtcConfiguration
+  }), s = new C({ peers: t }, { gracePeriod: o.peerReconnectGracePeriod }), i = p(), r = {
     host: {
       server: e,
       peers: t,
@@ -188,41 +231,42 @@ function _(n) {
       plugins: i
     },
     client: null,
-    shared: n.shared ?? {}
+    shared: o.shared ?? {}
   };
-  for (const c of n.plugins)
-    (a = c.install) == null || a.call(c, o);
-  return new f({
+  for (const a of o.plugins ?? [])
+    (c = a.install) == null || c.call(a, r);
+  return new S({
     server: e,
     peers: t,
     reconnectManager: s,
     plugins: i
   });
 }
-function E(n) {
-  var o;
-  const e = new m(n), t = new S({
+function N(o) {
+  var r;
+  const e = new y(o), t = new R({
     signaling: e,
-    username: n.username,
-    rtcConfiguration: n.rtcConfiguration
-  }), s = g(), i = {
+    username: o.username,
+    rtcConfiguration: o.rtcConfiguration,
+    rtc: globalThis
+  }), s = p(), i = {
     host: null,
     client: {
       server: e,
       peer: t,
       plugins: s
     },
-    shared: n.shared ?? {}
+    shared: o.shared ?? {}
   };
-  for (const a of n.plugins)
-    (o = a.install) == null || o.call(a, i);
-  return new C({
+  for (const c of o.plugins ?? [])
+    (r = c.install) == null || r.call(c, i);
+  return new I({
     server: e,
     peer: t,
     plugins: s
   });
 }
 export {
-  E as createClient,
-  _ as createHost
+  N as createClient,
+  T as createHost
 };

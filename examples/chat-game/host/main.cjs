@@ -13,11 +13,7 @@ const fs = require("node:fs");
 const { getUserList, getRandomColor } = require("./utils.js");
 const { timeStamp } = require("node:console");
 
-const VoicePlugin = require("peerbox-voice");
-
 const { SyncSystem, Utils } = PeerBox;
-
-const voiceStreams = new Map(); // Map of clientId to MediaStream
 
 const bannedWords = fs
   .readFileSync(path.join(__dirname, "./fr"), "utf8")
@@ -159,7 +155,7 @@ async function initHost(config = {
             }
         ]
     },
-    plugins: [VoicePlugin()],
+    plugins: [],
 }) {
     hostInstance = createHost(config);
 
@@ -176,15 +172,6 @@ function initWorld() {
 }
 
 function registerHostEvents(sync) {
-    hostInstance.on("peer-connected",((clientId) => {
-        console.log(clientId + " connected ");
-        //send audio streams to the new client
-        for (const [otherClientId, stream] of voiceStreams.entries()) {
-            if (otherClientId === clientId) continue; // Don't send the new client's own stream back to them
-            hostInstance.plugins.getPlugin("voice").send(stream, clientId);
-        }
-    }));
-
     hostInstance.on("peer-disconnected",((clientId) => {
         console.log(clientId + " disconnected ");
         const entity = PeerBox.User.getById(clientId, world);
@@ -273,14 +260,6 @@ function registerHostEvents(sync) {
         }
     });
 
-    hostInstance.on("track", ({ stream, track, clientId }) => {
-        console.log("Received track from", clientId, ":", track.kind);
-        // Broadcast the track to all other clients
-        //save the stream and broadcast it to all other clients except the sender (so newer clients can get the stream)
-
-        voiceStreams.set(clientId, stream);
-        hostInstance.plugins.getPlugin("voice").broadcast(stream, { exclude: clientId });
-    });
 }
 
 function registerSyncEvents(sync) {

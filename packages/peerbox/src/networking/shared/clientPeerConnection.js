@@ -3,19 +3,22 @@ import { SIGNAL_TYPES, createSignal, parseJSON } from "../signalingProtocol.js";
 import {EventEmitter} from "./eventEmitter.js";
 
 class ClientPeerManager extends EventEmitter {
-  constructor({ signaling, username = "Anonymous", rtcConfiguration  }) {
+  constructor({ signaling, username = "Anonymous", rtcConfiguration, rtc = globalThis }) {
     super();
     this.signaling = signaling; // abstraction: { send(type, payload) }
     this.username = username;
 
     this.rtcConfiguration = rtcConfiguration ;
+    this.rtc = rtc;
 
     this.pc = null;
     this.dataChannel = null;
     this.pendingIceCandidates = [];
+    this.signalSessionId = null;
 
     this._renegotiating = false;
     this._pendingRenegotiation = false;
+    this._recovering = false;
 
     this._setupSignaling();
   }
@@ -25,23 +28,36 @@ class ClientPeerManager extends EventEmitter {
     this.signaling.on("host-disconnected", () => {
       this.emit("host-disconnected");
     });
+    this.signaling.on("room-closed", (message) => {
+      this._recovering = true;
+      this.emit("room-closed", message);
+    });
   }
 
   async connect() {
-    this.pc = new RTCPeerConnection(this.rtcConfiguration);
+    if (this.pc) return;
+    this.pc = new this.rtc.RTCPeerConnection(this.rtcConfiguration ?? {
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    });
+    const pc = this.pc;
 
     this.pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        this.signaling.sendSignal("host", createSignal(SIGNAL_TYPES.ICE_CANDIDATE, { candidate: event.candidate }));
+      if (this.pc === pc && event.candidate) {
+        this.signaling.sendSignal("host", createSignal(SIGNAL_TYPES.ICE_CANDIDATE, {
+          candidate: event.candidate,
+          sessionId: this.signalSessionId,
+        }));
       }
     };
 
     this.pc.ondatachannel = (event) => {
+      if (this.pc !== pc) return;
       this.dataChannel = event.channel;
       this._setupDataChannel();
     };
 
     this.pc.ontrack = (event) => { 
+      if (this.pc !== pc) return;
       this.emit("track", {
         stream: event.streams[0],
         track: event.track,
@@ -53,6 +69,7 @@ class ClientPeerManager extends EventEmitter {
     if (!this.dataChannel) return;
 
     this.dataChannel.onopen = () => {
+      this._recovering = false;
       this.emit("connected");
     };
 
@@ -76,6 +93,10 @@ class ClientPeerManager extends EventEmitter {
 
     this.dataChannel.onclose = () => {
       this.emit("disconnected");
+      if (!this._recovering) {
+        this._recovering = true;
+        this.signaling.rejoin?.();
+      }
     };
   }
 
@@ -89,9 +110,21 @@ class ClientPeerManager extends EventEmitter {
     switch (data.type) {
       case SIGNAL_TYPES.OFFER:
         try {
-          await this.pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          if (data.reconnect && this.pc) {
+            this._closePeerConnection();
+            this.pc = null;
+            await this.connect();
+          }
+          if (this.signalSessionId && data.sessionId && this.signalSessionId !== data.sessionId) {
+            this.pendingIceCandidates = [];
+          }
+          this.signalSessionId = data.sessionId ?? null;
+          await this.pc.setRemoteDescription(new this.rtc.RTCSessionDescription(data.sdp));
 
-          for (const candidate of this.pendingIceCandidates) {
+          const candidates = this.pendingIceCandidates.filter((item) =>
+            !item.sessionId || !this.signalSessionId || item.sessionId === this.signalSessionId
+          );
+          for (const { candidate } of candidates) {
             try {
               await this.pc.addIceCandidate(candidate);
             } catch (err) {
@@ -103,7 +136,10 @@ class ClientPeerManager extends EventEmitter {
 
           const answer = await this.pc.createAnswer();
           await this.pc.setLocalDescription(answer);
-          this.signaling.sendSignal("host", createSignal(SIGNAL_TYPES.ANSWER, { sdp: this.pc.localDescription }));
+          this.signaling.sendSignal("host", createSignal(SIGNAL_TYPES.ANSWER, {
+            sdp: this.pc.localDescription,
+            sessionId: this.signalSessionId,
+          }));
         } catch (err) {
           this.emit("error", err);
         }
@@ -112,12 +148,12 @@ class ClientPeerManager extends EventEmitter {
       case SIGNAL_TYPES.ICE_CANDIDATE:
         if (data.candidate) {
           try {
-            const candidate = new RTCIceCandidate(data.candidate);
+            if (this.signalSessionId && data.sessionId && data.sessionId !== this.signalSessionId) break;
+            const candidate = new this.rtc.RTCIceCandidate(data.candidate);
             if (this.pc.remoteDescription) {
               await this.pc.addIceCandidate(candidate);
             } else {
-                this.pendingIceCandidates ??= [];
-                this.pendingIceCandidates.push(candidate);
+                this.pendingIceCandidates.push({ candidate, sessionId: data.sessionId ?? null });
             } 
           } catch (err) {
             this.emit("error", err);
@@ -128,6 +164,30 @@ class ClientPeerManager extends EventEmitter {
       default:
         this.emit("warn", `Unknown signal type from host: ${data.type}`);
     }
+  }
+
+  _closePeerConnection() {
+    if (this.dataChannel) {
+      this.dataChannel.onopen = null;
+      this.dataChannel.onclose = null;
+      this.dataChannel.onmessage = null;
+      this.dataChannel.onerror = null;
+      try { this.dataChannel.close(); } catch {}
+    }
+    if (this.pc) {
+      this.pc.onicecandidate = null;
+      this.pc.ondatachannel = null;
+      this.pc.ontrack = null;
+      try { this.pc.close(); } catch {}
+    }
+    this.dataChannel = null;
+    this.pendingIceCandidates = [];
+    this.signalSessionId = null;
+  }
+
+  close() {
+    this._closePeerConnection();
+    this.pc = null;
   }
 
   send(message) {
@@ -163,6 +223,7 @@ class ClientPeerManager extends EventEmitter {
         "host",
         createSignal(SIGNAL_TYPES.OFFER, {
           sdp: this.pc.localDescription,
+          sessionId: this.signalSessionId,
         })
       );
       

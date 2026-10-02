@@ -8,7 +8,9 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: path.resolve(__dirname, 'client/index.html')
+        main: path.resolve(__dirname, 'client/index.html'),
+        host: path.resolve(__dirname, 'client/host.html'),
+        game: path.resolve(__dirname, 'client/game.html'),
       }
     }
   },

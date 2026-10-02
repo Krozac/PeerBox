@@ -13,4 +13,5 @@ module.exports = {
   },
   SECRET:"super-secret",
   reconnectGracePeriod: 120000, // 2 minutes
+  hostReconnectGracePeriod: 120000, // retain room metadata while a host reconnects
 };

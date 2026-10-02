@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#27214d" />
+    <title>Host Bubble Chat</title>
+    <link rel="stylesheet" href="./assets/styles/bubbles.css" />
+    <link rel="stylesheet" href="./host.css" />
+  </head>
+  <body class="host-page">
+    <main id="create-panel" class="host-create-panel">
+      <a class="host-brand" href="./"><img src="./assets/peerbox.svg" alt="" /> PeerBox</a>
+      <section class="host-card host-create-card">
+        <p class="eyebrow">Browser hosted room</p>
+        <h1>Start Bubble Chat</h1>
+        <p>Your browser hosts the game. You will join as a player in this page too.</p>
+        <form id="create-room-form" class="host-form">
+          <label for="host-name">Your player name</label>
+          <input id="host-name" name="username" maxlength="16" autocomplete="nickname" required placeholder="e.g. Alex" />
+          <button id="create-room-button" class="pb-bubbles-button" type="submit">Create room</button>
+        </form>
+        <p id="host-status" class="host-status" role="status"></p>
+      </section>
+    </main>
+
+    <section id="room-panel" class="room-panel" hidden>
+      <button id="toggle-toolbar-button" class="toolbar-toggle" type="button" aria-label="Hide room controls" aria-expanded="true" title="Hide room controls">▲</button>
+      <header class="host-toolbar">
+        <a class="host-brand" href="./"><img src="./assets/peerbox.svg" alt="" /> PeerBox</a>
+        <div class="toolbar-room-code"><span>Room</span><strong id="room-code"></strong><button id="copy-code-button" class="toolbar-button" type="button">Copy code</button></div>
+        <a id="invite-link" class="invite-link" href="./">Invite players</a>
+        <button id="copy-link-button" class="toolbar-button" type="button">Copy invite</button>
+        <span class="player-count"><strong id="player-count">0</strong> players</span>
+        <span id="connection-status" class="connection-pill" data-state="waiting">Starting</span>
+        <button id="close-room-button" class="danger-button" type="button">Close room</button>
+      </header>
+      <p id="room-status" class="room-status" role="status"></p>
+      <iframe id="player-game-frame" title="Your player view" allow="autoplay; fullscreen" src="about:blank"></iframe>
+    </section>
+    <script type="module" src="./hostMain.js"></script>
+  </body>
+</html>

@@ -1,8 +1,9 @@
-// clientEnv.js
-// this is used to communicate between renderer -> electron (unused in a browser context)
+// Optional Electron bridge for the legacy desktop host. The browser example
+// reads its network endpoints from Vite environment variables.
+import { SIGNALING_URL } from "./networkConfig.js";
 
 export const env = {
-  SIGNALING_URL: "ws://localhost:5501", // default for browser
+  SIGNALING_URL,
   host: {
     createRoom: () => console.warn("createRoom not available outside Electron"),
     close: () => console.warn("closeHost not available outside Electron"),
@@ -11,8 +12,8 @@ export const env = {
     onRoomCreated: (_callback) => {},
   },
   window: {
-    resize: (_w, _h) => console.warn("resize not available outside Electron"),
-    toggleFullscreen: () => console.warn("toggleFullscreen not available outside Electron"),
+    resize: () => {},
+    toggleFullscreen: () => {},
   },
 };
 

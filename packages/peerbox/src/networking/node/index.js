@@ -17,11 +17,10 @@ export function createHost(config) {
   const peers = new HostPeerManager({
     hostServer: server,
     rtc: wrtc,
+    rtcConfiguration: config.rtcConfiguration,
   });
 
-  const reconnectManager = new HostReconnectManager({
-    peers,
-  });
+  const reconnectManager = new HostReconnectManager({ peers }, { gracePeriod: config.peerReconnectGracePeriod });
 
   const pluginRegistry  = createPluginRegistry();
 
@@ -36,7 +35,7 @@ export function createHost(config) {
       shared: config.shared ?? {},
   };
 
-  for (const plugin of config.plugins) {
+  for (const plugin of config.plugins ?? []) {
     plugin.install?.(context);
   }
 

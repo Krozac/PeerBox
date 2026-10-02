@@ -1,309 +1,200 @@
 import * as Peerbox from "peerbox";
 import { createClient } from "peerbox/browser";
+import { ChatScene } from "./scenes/chatScene.js";
+import { SweepLeftTransition, SweepRightTransition } from "./transitions/sweep.js";
+import { SIGNALING_URL } from "./networkConfig.js";
 
-import { ChatScene } from './scenes/chatScene.js';
-import { env } from "./clientEnv.js";
+const params = new URLSearchParams(window.location.search);
+const token = params.get("token");
+const loadingRoot = document.querySelector("#game-root");
+const networkStatus = document.querySelector("#network-status");
 
-import VoicePlugin from "peerbox-voice";
+let roomId = "";
+let username = localStorage.getItem("username") || "Anonymous";
+let gameStarted = false;
+let client;
 
-let params = new URLSearchParams(document.location.search)
-const token = params.get("token")
-
-let username;
-let roomId;
-
-
-import signal1 from './assets/models/signal/signal1.svg';
-import signal2 from './assets/models/signal/signal2.svg';
-import signal3 from './assets/models/signal/signal3.svg';
-
-
-import { SweepRightTransition, SweepLeftTransition } from './transitions/sweep.js';
-
-const signals = [signal1, signal2, signal3];
-
-async function bootstrap() {
-
-  Peerbox.Utils.LoadingOverlay.show("Connecting to host...",document.getElementById("game-root"));
-
-  const token = params.get("token")
-  if (!token) window.location.href = `http://127.0.0.1:8080/`;
-
-  // 1. networking
-  const client = createClient({
-    url: "ws://localhost:5501",
-    username: localStorage.getItem("username"),
-    rtcConfiguration: {
-        iceServers: [
-            // STUN (optional on LAN, but harmless)
-            { urls: "stun:stun.l.google.com:19302" },
-
-            // YOUR LOCAL TURN SERVER
-            {
-            urls: [
-                "turn:192.168.1.15:3478?transport=udp",
-                "turn:192.168.1.15:3478?transport=tcp"
-            ],
-            username: "webrtc",
-            credential: "webrtc123"
-            }
-        ]
-    },
-    plugins: [VoicePlugin()],
-  });
-  console.log("plugins : ",client.plugins.getPlugin("voice"))
-
-  const audioMap = new Map();
-
-  client.peer.on("track", ({ stream, clientId }) => {
-    if (audioMap.has(clientId)) return;
-
-    const audio = document.createElement("audio");
-    audio.autoplay = true;
-    audio.playsInline = true;
-    audio.controls = true;
-
-    audio.srcObject = stream;
-    console.log("Tracks:", stream.getTracks());
-
-    console.log("Audio tracks:", stream.getAudioTracks());
-    document.body.appendChild(audio);
-    audioMap.set(clientId, audio);
-
-    audio.onloadedmetadata = async () => {
-      try {
-        await audio.play();
-        console.log("Audio playing for", clientId);
-      } catch (e) {
-        console.error("Audio play failed:", e);
-      }
-    };
-  });
-
-  await client.connect();
-
-  client.server.send("join", { token,userId : localStorage.getItem('clientId') || null});
-
-  client.server.on("join-accepted", async (msg) => {
-    console.log(`✅ Joined ${msg.roomId} as ${msg.username}`);
-    console.log(msg)
-    
-    username = msg.username;
-    roomId = msg.roomId;
-    console.log(msg)
-    client.id = msg.userId;
-    await client.plugins.getPlugin("voice").enableMicrophone();
-
-
-    if (msg.userId) {
-      localStorage.setItem("clientId", msg.userId);
-    }
-
-  });
-  client.on("connected", async () => {
-    console.log("✅ Connected to host, starting ECS...");
-
-    // 2. ECS world
-    const world = new Peerbox.World();
-    world.registerSystem(Peerbox.Systems.HtmlRenderSystem,{type:"render"});
-    world.registerSystem(Peerbox.Systems.PingSystem(client, { interval: 2 }));
-    world.registerSystem(Peerbox.Systems.PhysicsSystem);
-
-    world.registerSystem(Peerbox.Systems.ParticleSystem)
-    world.registerSystem(Peerbox.Systems.ParticleMovementSystem)
-    world.registerSystem(Peerbox.Systems.ToastSystem);
-    
-    const sync = new Peerbox.SyncSystem({world, network:client, isHost:false});
-
-    const transitions = new Peerbox.TransitionManager();
-    transitions.register("bubbles-sweep-right",SweepRightTransition);
-    transitions.register("bubbles-sweep-left",SweepLeftTransition);
-
-    const scenes = new Peerbox.SceneManager("#scene-container",{loading:true, loadingDelay:120, transitionManager:transitions});
-    //inject title helper 
-    scenes.setTitle = (title) =>{
-      let titledom = document.getElementById("sceneTitle");
-      if (!titledom) return;
-      titledom.innerHTML = title;
-    }
-
-    await scenes.load(ChatScene,{world , sync ,client});
-
-    sync.onAction("users-state",(payload) => { reconcileUsers(payload.payload,world) }, {key:"client-users-state"});
-
-    let fpsEl = document.getElementById("status-fps");
-    let smoothedFps = 60;
-    let fpsAccumulator = 0;
-    
-    Peerbox.GameLoop.start({
-      onUpdate : (dt) => world.update(dt),
-      onRender : (dt) => {
-        world.render(dt)
-        
-        // dt is in seconds (GameLoop converts ms->s)
-        const instFps = dt > 0 ? 1 / dt : 0;
-        // exponential moving average for stability
-        smoothedFps = smoothedFps * 0.9 + instFps * 0.1;
-
-        fpsAccumulator += dt;
-        // update UI every 200ms
-        if (fpsAccumulator >= 0.2) {
-          fpsEl.innerText = `FPS: ${Math.round(smoothedFps)}`;
-          fpsAccumulator = 0;
-        }
-      
-      }
-    });
-
-    let pingentity = world.createEntity()
-
-    world.addComponent(pingentity,Peerbox.Components.HtmlRenderComponent, {
-      parentSelector: "#status-ping",
-      tagName: "div",
-      classes: null,
-      html: `<strong>0ms</strong>`,
-    })
-
-    world.on("ping-update",({ rtt, id})=>{
-      console.log(rtt)
-      let pingcomp = world.getComponent(pingentity,Peerbox.Components.HtmlRenderComponent)
-        // Update the text
-        let html = `<p style="display:inline">${rtt}ms</p>`;
-
-        // Determine signal level
-        let level;
-        if (rtt < 50) level = 2;       // best
-        else if (rtt < 150) level = 1;  // medium
-        else level = 0;                 // worst
-
-        // Append the SVG image
-        html += `<div style="display:inline;vertical-align:top; " class="ping-signal"><img src="${signals[level]}" alt="signal"/></div>`;
-
-        // Update component html
-        pingcomp.html = html;
-
-    })
-
-    document.getElementById("status-entity").innerHTML = "E:"+world.entities.size;
-
-    world.on("entityCreated", () =>{
-      document.getElementById("status-entity").innerHTML = "E:"+world.entities.size;
-    })
-
-     world.on("entityRemoved", () =>{
-      document.getElementById("status-entity").innerHTML = "E:"+world.entities.size;
-    })
-
-
-    document.getElementById("room-id").innerHTML = roomId;
-    document.getElementById("copyRoomIdBtn").addEventListener("click", () => {
-      navigator.clipboard.writeText(roomId).then(() => {
-        window.dispatchEvent(new CustomEvent("toast", {
-          detail: {
-            message: "Room ID copied to clipboard!",
-            duration: 2, // seconds
-            type: "success"
-          }
-          
-        }));
-      }).catch(err => {
-        console.error("Failed to copy Room ID: ", err);
-      });
-    });
-
-    //intro got back
-
-    client.on("join-ack", ({ userEntityId, userList, username }) => {
-      console.log(`Joined as ${username}, entity = ${userEntityId}`);
-
-
-      document.getElementById("status-client").innerHTML=userEntityId;
-      console.log("Existing users in the room:", userList);
-     
-
-      console.log(world.getEntities());
-
-      world.clientEntityId = userEntityId;   // ECS id
-      client.entityId = userEntityId;        // same ECS id
-
-      client.username = username;
-    });
-
-    // ✅ Now it’s safe to announce yourself
-    client.send({
-        type: "intro",
-        payload: { username }
-      });
-
+if (!token) {
+  window.location.replace("./");
+} else {
+  bootstrap().catch((error) => {
     Peerbox.Utils.LoadingOverlay.hide();
+    setNetworkStatus(error.message || "Could not connect.", true);
   });
-
 }
 
-let currentScale = 1;
-let currentOffsetX = 0;
-let currentOffsetY = 0;
+async function bootstrap() {
+  Peerbox.Utils.LoadingOverlay.show("Connecting to room…", loadingRoot);
 
+  client = createClient({
+    url: SIGNALING_URL,
+    username,
+    plugins: [],
+    rtcConfiguration: {
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    },
+  });
 
+  client.server.on("join-accepted", (message) => {
+    roomId = message.roomId;
+    username = message.username || username;
+    client.id = message.userId;
+    localStorage.setItem("username", username);
+    localStorage.setItem("clientId", message.userId);
+    document.querySelector("#room-id").textContent = roomId;
+  });
 
-function resizeGameRoot() {
-  const root = document.getElementById("game-root");
-  if (!root) return;
+  client.server.on("join-rejected", ({ reason }) => {
+    setNetworkStatus(joinError(reason), true);
+    Peerbox.Utils.LoadingOverlay.hide();
+  });
+  client.server.on("room-closed", () => {
+    setNetworkStatus("The host closed this room.", true);
+    Peerbox.Utils.LoadingOverlay.hide();
+  });
+  client.server.on("host-resumed", () => {
+    if (client.peer.dataChannel?.readyState === "open") setNetworkStatus("Connected");
+  });
+  client.server.on("error", (error) => setNetworkStatus(error?.message || "Signaling connection error.", true));
 
-  const targetWidth = 1920;
-  const targetHeight = 1080;
+  client.on("connected", () => {
+    if (!gameStarted) {
+      startGameOnce().catch((error) => setNetworkStatus(error.message || "Could not start the game.", true));
+      return;
+    }
+    setNetworkStatus("Connected");
+    client.send({ type: "intro", payload: { username } });
+  });
+  client.on("disconnected", () => setNetworkStatus("Connection interrupted. Reconnecting…"));
+  client.on("host-disconnected", () => setNetworkStatus("Host connection interrupted. Waiting for the host…"));
+  client.on("error", (error) => setNetworkStatus(error?.message || "Peer connection error.", true));
 
-  const scaleX = window.innerWidth / targetWidth;
-  const scaleY = window.innerHeight / targetHeight;
-  const scale = Math.min(scaleX, scaleY);
+  await client.connect();
+  client.server.send("join", {
+    token,
+    userId: localStorage.getItem("clientId") || null,
+  });
+}
 
-  const offsetX = (window.innerWidth - targetWidth * scale) / 2;
-  const offsetY = (window.innerHeight - targetHeight * scale) / 2;
+async function startGameOnce() {
+  if (gameStarted) {
+    setNetworkStatus("Connected");
+    return;
+  }
+  gameStarted = true;
+  setNetworkStatus("Connected");
 
-  root.style.position = "absolute";
-  root.style.transformOrigin = "top left";
-  root.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
-  
-  // store for coordinate conversion
-  currentScale = scale;
-  currentOffsetX = offsetX;
-  currentOffsetY = offsetY;
+  const world = new Peerbox.World();
+  world.registerSystem(Peerbox.Systems.HtmlRenderSystem, { type: "render" });
+  world.registerSystem(Peerbox.Systems.PingSystem(client, { interval: 2 }));
+  world.registerSystem(Peerbox.Systems.PhysicsSystem);
+  world.registerSystem(Peerbox.Systems.ParticleSystem);
+  world.registerSystem(Peerbox.Systems.ParticleMovementSystem);
+  world.registerSystem(Peerbox.Systems.ToastSystem);
+
+  const sync = new Peerbox.SyncSystem({ world, network: client, isHost: false });
+  const transitions = new Peerbox.TransitionManager();
+  transitions.register("bubbles-sweep-right", SweepRightTransition);
+  transitions.register("bubbles-sweep-left", SweepLeftTransition);
+
+  const scenes = new Peerbox.SceneManager("#scene-container", {
+    loading: true,
+    loadingDelay: 120,
+    transitionManager: transitions,
+  });
+  scenes.setTitle = (title) => {
+    const titleElement = document.querySelector("#sceneTitle");
+    if (titleElement) titleElement.textContent = title;
+  };
+
+  await scenes.load(ChatScene, { world, sync, client });
+  sync.onAction("users-state", ({ payload }) => reconcileUsers(payload, world));
+
+  const fpsElement = document.querySelector("#status-fps");
+  let smoothedFps = 60;
+  let fpsAccumulator = 0;
+  Peerbox.GameLoop.start({
+    onUpdate: (dt) => world.update(dt),
+    onRender: (dt) => {
+      world.render(dt);
+      if (!fpsElement) return;
+      const fps = dt > 0 ? 1 / dt : 0;
+      smoothedFps = smoothedFps * 0.9 + fps * 0.1;
+      fpsAccumulator += dt;
+      if (fpsAccumulator >= 0.2) {
+        fpsElement.textContent = `FPS: ${Math.round(smoothedFps)}`;
+        fpsAccumulator = 0;
+      }
+    },
+  });
+
+  addPingDisplay(world);
+  updateEntityCount(world);
+  world.on("entityCreated", () => updateEntityCount(world));
+  world.on("entityRemoved", () => updateEntityCount(world));
+
+  document.querySelector("#copyRoomIdBtn")?.addEventListener("click", () => {
+    navigator.clipboard?.writeText(roomId).catch(() => setNetworkStatus("Select the room code and copy it manually."));
+  });
+  document.querySelector("#leaveRoomBtn")?.addEventListener("click", () => {
+    client.disconnect();
+    localStorage.removeItem("clientId");
+    window.location.assign("./");
+  });
+
+  client.send({ type: "intro", payload: { username } });
+  Peerbox.Utils.LoadingOverlay.hide();
+}
+
+function addPingDisplay(world) {
+  const entity = world.createEntity();
+  world.addComponent(entity, Peerbox.Components.HtmlRenderComponent, {
+    parentSelector: "#status-ping",
+    tagName: "div",
+    classes: null,
+    html: "<strong>—</strong>",
+  });
+  world.on("ping-update", ({ rtt }) => {
+    const component = world.getComponent(entity, Peerbox.Components.HtmlRenderComponent);
+    if (component) component.html = `<p style="display:inline">${Number(rtt) || 0}ms</p>`;
+  });
+}
+
+function updateEntityCount(world) {
+  const element = document.querySelector("#status-entity");
+  if (element) element.textContent = `Entities: ${world.entities.size}`;
+}
+
+function setNetworkStatus(message, isError = false) {
+  if (!networkStatus) return;
+  networkStatus.textContent = message;
+  networkStatus.dataset.error = String(isError);
+}
+
+function joinError(reason) {
+  if (reason === "room-not-found") return "That room is no longer available.";
+  if (reason === "invalid-token") return "This invite has expired. Return to the lobby and re-enter the room code.";
+  return "Could not join this room.";
 }
 
 function reconcileUsers(users, world) {
-  let existingUsers = new Set(world.getEntitiesWithComponent(Peerbox.Components.userComponent).map(e => world.getComponent(e, Peerbox.Components.userComponent).id));
+  if (!Array.isArray(users)) return;
+  const componentName = Peerbox.Components.userComponent;
+  const existing = new Map(world.getEntitiesWithComponent(componentName).map((entity) => {
+    const user = world.getComponent(entity, componentName);
+    return [user.id, entity];
+  }));
 
-  users.forEach(user => {
-    if (!existingUsers.has(user.id)) {
-      // New user, create entity
-      const entity = world.createEntity();
-      world.addComponent(entity, Peerbox.Components.userComponent, {
-        id: user.id,
-        name: user.name,
-        color: user.color,
-      });
-    } else {
-      existingUsers.delete(user.id); // still exists, remove from set
-    }
-  });
-
-  // Any remaining in existingUsers set are disconnected, remove them
-  existingUsers.forEach(id => {
-    const entity = world.getEntitiesWithComponent(Peerbox.Components.userComponent).find(e => world.getComponent(e, Peerbox.Components.userComponent).id === id);
+  for (const user of users) {
+    const entity = existing.get(user.id);
     if (entity) {
-      world.entities.delete(entity);
-      world.components.delete(entity);
+      const component = world.getComponent(entity, componentName);
+      Object.assign(component, { name: user.name, color: user.color, connected: user.connected });
+      existing.delete(user.id);
+    } else {
+      const newEntity = world.createEntity();
+      world.addComponent(newEntity, componentName, { ...user, role: "client" });
     }
-  });
-
-  console.log("Reconciled users. Current user entities:", world.getEntitiesWithComponent(Peerbox.Components.userComponent).map(e => world.getComponent(e, Peerbox.Components.userComponent)));
-
+  }
+  world.removeEntities([...existing.values()]);
 }
-
-
-
-window.addEventListener("resize", resizeGameRoot);
-resizeGameRoot();
-
-
-bootstrap();

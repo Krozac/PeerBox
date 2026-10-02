@@ -1,0 +1,486 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+.host-page {
+  min-height: 100vh;
+
+  color: var(--text-color);
+  font-family: var(--font-family);
+
+  background-color: var(--background-color);
+  background-image:
+    url('assets/60-lines.png'),
+    radial-gradient(
+      circle at center,
+      var(--secondary-color) 0%,
+      var(--background-color) 100%
+    );
+}
+
+/* Brand */
+.host-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+
+  color: var(--primary-color);
+
+  font-family: var(--font-family);
+  font-size: 1.05rem;
+  font-weight: normal;
+
+  text-decoration: none;
+
+  text-shadow: 2px 2px 0 var(--secondary-color);
+}
+
+.host-brand img {
+  width: 34px;
+  height: 34px;
+
+  filter: drop-shadow(3px 3px 1px rgba(0, 0, 0, .4));
+}
+
+/* Create page */
+.host-create-panel {
+  width: min(100% - 32px, 680px);
+  margin: 0 auto;
+  padding-top: 24px;
+}
+
+.host-card {
+  padding: clamp(22px, 5vw, 40px);
+
+  border: 6px solid var(--primary-color);
+  border-radius: 15px;
+
+  background-color: var(--background-color-2);
+
+  box-shadow:
+    0 1px 0 var(--secondary-color),
+    0 2px 0 var(--secondary-color),
+    0 3px 0 var(--secondary-color),
+    0 4px 0 var(--secondary-color),
+    0 5px 0 var(--secondary-color),
+    0 6px 0 var(--secondary-color),
+    0 7px 0 var(--secondary-color),
+    0 8px 0 var(--secondary-color),
+    0 0 5px rgba(10, 0, 0, .05),
+    0 1px 3px rgba(10, 0, 0, .2),
+    0 3px 5px rgba(10, 0, 0, .2),
+    0 5px 10px rgba(10, 0, 0, .2),
+    0 10px 10px rgba(10, 0, 0, .2),
+    0 20px 20px rgba(10, 0, 0, .3);
+}
+
+.host-create-card {
+  margin: 8vh auto;
+}
+
+.host-card h1 {
+  margin: 4px 0 8px;
+
+  color: var(--primary-color);
+
+  font-family: var(--font-family);
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  font-weight: normal;
+  line-height: 1;
+
+  text-shadow:
+    0 1px 0 var(--secondary-color),
+    0 2px 0 var(--secondary-color),
+    0 3px 0 var(--secondary-color),
+    0 4px 0 var(--secondary-color),
+    0 5px 0 var(--secondary-color),
+    0 6px 0 var(--secondary-color),
+    0 7px 0 var(--secondary-color),
+    0 8px 0 var(--secondary-color),
+    0 0 5px rgba(10, 0, 0, .05),
+    0 1px 3px rgba(10, 0, 0, .2),
+    0 3px 5px rgba(10, 0, 0, .2),
+    0 5px 10px rgba(10, 0, 0, .2),
+    0 10px 10px rgba(10, 0, 0, .2),
+    0 20px 20px rgba(10, 0, 0, .3);
+}
+
+.host-card p {
+  color: var(--text-color);
+  line-height: 1.55;
+  opacity: .85;
+}
+
+.eyebrow {
+  margin-bottom: 8px;
+
+  color: var(--primary-color) !important;
+
+  font-family: var(--font-family);
+  font-size: .75rem;
+  font-weight: normal;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+
+/* Host form */
+.host-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 26px;
+}
+
+.host-form label {
+  color: var(--text-color);
+
+  font-family: var(--font-family);
+  font-size: .9rem;
+  font-weight: normal;
+}
+
+.host-form input {
+  min-width: 0;
+  width: 100%;
+
+  padding: 13px 14px;
+
+  border: 2px solid var(--primary-color);
+  border-radius: 5px;
+
+  background: #090713;
+  color: var(--text-color);
+
+  font-family: var(--font-family);
+  font-size: 1rem;
+}
+
+.host-form input::placeholder {
+  color: var(--text-color);
+  opacity: .5;
+}
+
+.host-form input:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.host-form .pb-bubbles-button {
+  min-height: 48px;
+  margin-top: 8px;
+}
+
+.host-form button:disabled {
+  cursor: wait;
+  opacity: .6;
+}
+
+/* Status */
+.host-status,
+.room-status {
+  min-height: 1.4em;
+  margin: 14px 0 0;
+
+  color: var(--text-color);
+
+  font-family: var(--font-family);
+  font-size: .9rem;
+}
+
+.host-status[data-error="true"],
+.room-status[data-error="true"] {
+  color: #ffb6b6;
+}
+
+/* Room */
+.room-panel {
+  position: relative;
+
+  display: flex;
+  width: 100%;
+  height: 100vh;
+
+  flex-direction: column;
+
+  background-color: var(--background-color);
+}
+
+/* Toolbar */
+.host-toolbar {
+  display: flex;
+
+  min-height: 58px;
+
+  align-items: center;
+  gap: 12px;
+
+  padding: 8px 56px 8px 14px;
+
+  background-color: var(--background-color-2);
+
+  border-bottom: 2px solid var(--primary-color);
+
+  box-shadow:
+    0 3px 0 var(--secondary-color),
+    0 5px 10px rgba(0, 0, 0, .25);
+
+  font-family: var(--font-family);
+}
+
+.room-panel.toolbar-collapsed .host-toolbar {
+  display: none;
+}
+
+/* Toolbar toggle */
+.toolbar-toggle {
+  position: absolute;
+
+  top: 7px;
+  right: 10px;
+
+  z-index: 2;
+
+  width: 34px;
+  height: 30px;
+
+  border: 2px solid var(--primary-color);
+  border-radius: 5px;
+
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+
+  cursor: pointer;
+
+  font-family: var(--font-family);
+  font-size: .75rem;
+
+  transition:
+    background-color .2s ease,
+    transform .15s ease;
+}
+
+.toolbar-toggle:hover {
+  background-color: var(--primary-color);
+}
+
+.toolbar-toggle:active {
+  transform: translateY(2px);
+}
+
+.room-panel:not(.toolbar-collapsed) .toolbar-toggle {
+  top: 15px;
+  right: 14px;
+
+  background-color: transparent;
+}
+
+.room-panel.toolbar-collapsed .room-status {
+  display: none;
+}
+
+/* Room code */
+.toolbar-room-code {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  color: var(--text-color);
+
+  font-family: var(--font-family);
+  font-size: .8rem;
+
+  opacity: .7;
+}
+
+.toolbar-room-code strong {
+  color: var(--primary-color);
+  letter-spacing: .06em;
+}
+
+/* Invite link */
+.invite-link {
+  overflow: hidden;
+
+  max-width: 230px;
+
+  color: var(--primary-color);
+
+  font-family: var(--font-family);
+  font-size: .8rem;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  text-decoration: none;
+}
+
+.invite-link:hover {
+  color: var(--text-color);
+}
+
+/* Toolbar buttons */
+.toolbar-button,
+.danger-button {
+  flex: 0 0 auto;
+
+  padding: 8px 10px;
+
+  border: 2px solid var(--primary-color);
+  border-radius: 5px;
+
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+
+  cursor: pointer;
+
+  font-family: var(--font-family);
+  font-size: .78rem;
+
+  transition:
+    background-color .2s ease,
+    transform .15s ease;
+}
+
+.toolbar-button:hover {
+  background-color: var(--primary-color);
+}
+
+.toolbar-button:active,
+.danger-button:active {
+  transform: translateY(2px);
+}
+
+/* Player count */
+.player-count {
+  margin-left: auto;
+
+  color: var(--text-color);
+
+  white-space: nowrap;
+
+  font-family: var(--font-family);
+  font-size: .85rem;
+}
+
+/* Connection status */
+.connection-pill {
+  flex: 0 0 auto;
+
+  padding: 6px 9px;
+
+  border: 2px solid var(--primary-color);
+  border-radius: 999px;
+
+  color: var(--primary-color);
+
+  font-family: var(--font-family);
+  font-size: .75rem;
+  font-weight: normal;
+
+  white-space: nowrap;
+}
+
+.connection-pill[data-state="online"] {
+  border-color: #72d6a0;
+  color: #9af0bc;
+}
+
+.connection-pill[data-state="waiting"] {
+  border-color: #f1c76d;
+  color: #f1d58e;
+}
+
+.connection-pill[data-state="offline"] {
+  border-color: #ed8585;
+  color: #ffb6b6;
+}
+
+/* Danger button */
+.danger-button {
+  border-color: #ca7272;
+  background-color: #612c55;
+}
+
+.danger-button:hover {
+  background-color: #7b3569;
+}
+
+/* Room status */
+.room-status {
+  min-height: 0;
+  margin: 0;
+  padding: 3px 14px;
+
+  background-color: var(--background-color-2);
+  color: var(--text-color);
+
+  font-family: var(--font-family);
+  font-size: .75rem;
+
+  opacity: .8;
+}
+
+/* Game iframe */
+#player-game-frame {
+  width: 100%;
+  min-height: 0;
+
+  flex: 1;
+
+  border: 0;
+
+  background-color: var(--background-color);
+
+  background-image:
+    url('../60-lines.png'),
+    radial-gradient(
+      circle at center,
+      var(--secondary-color) 0%,
+      var(--background-color) 100%
+    );
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* Mobile */
+@media (max-width: 760px) {
+  .host-toolbar {
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .host-toolbar > .host-brand {
+    margin-right: auto;
+  }
+
+  .player-count {
+    margin-left: 0;
+  }
+
+  .invite-link {
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 560px) {
+  .host-create-panel {
+    width: min(100% - 24px, 680px);
+  }
+
+  .host-card {
+    padding: 24px 20px;
+    border-width: 4px;
+  }
+
+  .host-card h1 {
+    font-size: clamp(2.5rem, 13vw, 3.5rem);
+  }
+}

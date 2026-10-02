@@ -1,44 +1,31 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>PeerBox</title>
-  <link rel="stylesheet" href="./assets/styles/bubbles.css"/>
-  <link rel="stylesheet" href="./assets/styles/transitions.css"/>
-</head>
-<body>
-  <div id="game-root">
-    <div class="peerbox-icon-background" id=""></div>
-    <div id="persistent-ui">
-      <h1 class="pb-bubbles-title" id="sceneTitle">PeerBox</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#27214d" />
+    <title>PeerBox Chat Game</title>
+    <link rel="stylesheet" href="./assets/styles/bubbles.css" />
+    <link rel="stylesheet" href="./lobby.css" />
+  </head>
+  <body class="lobby-page">
+    <main class="lobby-card">
+      <img class="lobby-logo" src="./assets/peerbox.svg" alt="PeerBox" />
+      <p class="eyebrow">PeerBox example</p>
+      <h1 class="pb-bubbles-title">Bubble Chat</h1>
+      <p class="lobby-description">Start a room in your browser, then invite people to join.</p>
 
-      <!-- Status -->
-      <div id="toast-container" class="pb-bubbles-toast-container"></div>
-      <div id="status" style="position:absolute; top:5px; right:20px; background-color: rgba(102, 102, 102, 0.473);">
-        <div id="status-fps"></div>
-        <div id="status-ping"></div>
-        <div id="status-client"></div>
-        <div id="status-entity"></div>
-      </div>
+      <form id="join-form" class="lobby-form">
+        <label for="username">Your name</label>
+        <input id="username" name="username" maxlength="16" autocomplete="nickname" required placeholder="e.g. Alex" />
+        <label for="room-id">Room code</label>
+        <input id="room-id" name="roomId" maxlength="32" autocomplete="off" required placeholder="Enter a room code" />
+        <button class="pb-bubbles-button" type="submit">Join room</button>
+      </form>
 
-      <!-- Room ID Display -->
-      <div id="room-id-wrapper" class="pb-bubbles-room-id-container">
-        <div id="room-id" class="pb-bubbles-room-id"></div>
-        <button id="copyRoomIdBtn" type="button" title="Copy Room ID" aria-label="Copy Room ID" class="pb-bubbles-room-id-copy pb-bubbles-button">
-          <img src="assets/copy.svg" alt="Copy Room ID" />
-        </button>
-      </div>
-
-
-      <button id="leaveRoomBtn" class="pb-bubbles-chat-leave-btn" style="display: none;">
-        <img src="assets/leave.svg" alt="Leave Room" />
-      </button>
-    </div>
-    <!-- Scene Root -->
-    <div id="scene-container"></div>
-    <div id="scene-transition-layer"></div>
-  </div>
-
-  <script type="module" src="main.js"></script>
-</body>
-  
+      <p id="lobby-status" class="lobby-status" role="status"></p>
+      <a class="lobby-host-link" href="./host.html">Create a room as host</a>
+    </main>
+    <script type="module" src="./join.js"></script>
+  </body>
+</html>

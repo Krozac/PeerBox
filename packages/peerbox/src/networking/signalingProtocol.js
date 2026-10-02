@@ -11,8 +11,13 @@ export const SERVER_MSG_TYPES = {
   JOIN: "join",
   SIGNAL: "signal",
   CLIENT_DISCONNECTED: "client-disconnected",
+  HOST_DISCONNECTED: "host-disconnected",
+  HOST_RESUME: "host-resume",
 
   ROOM_CREATED: "room-created",
+  HOST_RESUMED: "host-resumed",
+  HOST_RESUME_REJECTED: "host-resume-rejected",
+  ROOM_CLOSED: "room-closed",
   JOIN_ACCEPTED: "join-accepted",
   JOIN_REJECTED: "join-rejected",
   NEW_PEER: "new-peer",

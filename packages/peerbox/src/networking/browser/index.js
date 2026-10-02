@@ -4,6 +4,7 @@ import HostServer from "../shared/hostServer.js";
 import ClientServer from "../shared/clientServer.js";
 import HostPeerManager from "../shared/hostPeerConnection.js";
 import ClientPeerManager from "../shared/clientPeerConnection.js";
+import { HostReconnectManager } from "../shared/hostReconnection.js";
 
 import createPluginRegistry from "../shared/pluginRegistry.js";
 
@@ -16,9 +17,7 @@ export function createHost(config) {
     rtcConfiguration : config.rtcConfiguration,
   });
 
-  const reconnectManager = new HostReconnectManager({
-    peers,
-  });
+  const reconnectManager = new HostReconnectManager({ peers }, { gracePeriod: config.peerReconnectGracePeriod });
 
   const pluginRegistry  = createPluginRegistry();
 
@@ -33,7 +32,7 @@ export function createHost(config) {
       shared: config.shared ?? {},
   };
 
-  for (const plugin of config.plugins) {
+  for (const plugin of config.plugins ?? []) {
     plugin.install?.(context);
   }
 
@@ -52,6 +51,7 @@ export function createClient(config) {
     signaling: server,
     username: config.username,
     rtcConfiguration : config.rtcConfiguration,
+    rtc: globalThis,
   });
 
   const pluginRegistry  = createPluginRegistry();
@@ -65,7 +65,7 @@ export function createClient(config) {
       shared: config.shared ?? {},
   };
 
-  for (const plugin of config.plugins) {
+  for (const plugin of config.plugins ?? []) {
     plugin.install?.(context);
   }
 

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bubble Chat</title>
+  <link rel="stylesheet" href="./assets/styles/bubbles.css" />
+  <link rel="stylesheet" href="./assets/styles/transitions.css" />
+</head>
+<body>
+  <div id="game-root">
+    <div class="peerbox-icon-background"></div>
+    <div id="persistent-ui">
+      <h1 class="pb-bubbles-title" id="sceneTitle">Bubble Chat</h1>
+      <div id="toast-container" class="pb-bubbles-toast-container"></div>
+      <div id="status" class="game-status">
+        <div id="network-status" role="status">Connecting…</div>
+        <div id="status-fps"></div>
+        <div id="status-ping"></div>
+        <div id="status-client"></div>
+        <div id="status-entity"></div>
+      </div>
+      <div id="room-id-wrapper" class="pb-bubbles-room-id-container">
+        <span id="room-id" class="pb-bubbles-room-id"></span>
+        <button id="copyRoomIdBtn" type="button" title="Copy room code" aria-label="Copy room code" class="pb-bubbles-room-id-copy pb-bubbles-button">
+          <img src="./assets/copy.svg" alt="Copy room code" />
+        </button>
+      </div>
+      <button id="leaveRoomBtn" class="pb-bubbles-chat-leave-btn" type="button" aria-label="Leave room">
+        <img src="./assets/leave.svg" alt="Leave room" />
+      </button>
+    </div>
+    <div id="scene-container"></div>
+    <div id="scene-transition-layer"></div>
+  </div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

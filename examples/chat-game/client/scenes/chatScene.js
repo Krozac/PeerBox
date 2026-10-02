@@ -12,6 +12,8 @@ export const ChatScene = new Scene({
 
     // --- Helper to render chat messages in UI ---
     const renderChatMessage = (msg) => {
+      const safeUsername = escapeHtml(msg.username);
+      const safeText = escapeHtml(msg.text);
       const entity = world.createEntity();
       world.addComponent(entity, Components.HtmlRenderComponent, {
         parentSelector: "#chatBox",
@@ -22,7 +24,7 @@ export const ChatScene = new Scene({
             ? "pb-bubbles-chat-message--self"
             : "pb-bubbles-chat-message--other",
         ],
-        html: `<strong>${msg.username}:</strong> ${msg.text}`,
+        html: `<strong>${safeUsername}:</strong> ${safeText}`,
       });
       return entity;
     };
@@ -30,12 +32,13 @@ export const ChatScene = new Scene({
     const renderUser = (user, x , y) => {
       const entity = world.createEntity();
       const model = models[user.color] || models["red"]; // fallback to red if color not found
+      const safeName = escapeHtml(user.name);
 
       world.addComponent(entity, Components.HtmlRenderComponent, {
         parentSelector: "#userList",
         tagName: "div",
         classes: ["pb-bubbles-user"],
-        html: `<img src="${model}" alt="${user.name}" class="pb-bubbles-user-item"><span class="pb-bubbles-user-name">${user.name}</span>`,
+        html: `<img src="${model}" alt="${safeName}" class="pb-bubbles-user-item"><span class="pb-bubbles-user-name">${safeName}</span>`,
         style: {
           position: "absolute",
           left: `${x}px`,
@@ -69,7 +72,7 @@ export const ChatScene = new Scene({
         // ✅ Update existing message instead of creating a new one
         const el = world.getComponent(entity, Components.HtmlRenderComponent);
         if (el) {
-          el.html = `<strong>${clientId === client.id ? "You" : `${username}`}:</strong> ${text}`;
+          el.html = `<strong>${escapeHtml(clientId === client.id ? "You" : username)}:</strong> ${escapeHtml(text)}`;
         }
 
         // Optionally mark as "synced"
@@ -186,4 +189,14 @@ function layoutUserInCircle(i, n, { cx, cy, radius }) {
     x: cx + Math.cos(angle) * radius,
     y: cy + Math.sin(angle) * radius,
   };
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[character]);
 }

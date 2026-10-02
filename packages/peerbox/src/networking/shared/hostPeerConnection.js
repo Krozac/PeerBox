@@ -13,7 +13,7 @@ export default class HostPeerManager extends EventEmitter {
     
     this.hostServer = hostServer;
     this.rtc = rtc;
-    this.rtcConfiguration = rtcConfiguration;
+    this.rtcConfiguration = rtcConfiguration ?? configuration;
 
     
     this.peerConnections = new Map();    // clientId -> RTCPeerConnection
@@ -50,19 +50,17 @@ export default class HostPeerManager extends EventEmitter {
     }
   }
 
-  destroyPeer(clientId) {
-    this._destroyTransport(clientId);
+  addPeer(clientId) { return this._createPeer(clientId); }
+  reconnectPeer(clientId) { return this._replacePeer(clientId); }
+  handleSignal(clientId, payload) { return this._handleSignal(clientId, payload); }
 
-    this.emit("peer-disconnected", clientId); // called when true disconnect else we emit "peer-transport-lost" and wait for possible reconnect
+  closeAll() {
+    for (const id of [...this.peerConnections.keys()]) this.destroyPeer(id);
   }
 
-  async _replacePeer(clientId) {
-    // This event is emitted by the signaling server when it detects a reconnect (same userId)
-    // We can choose to handle it here or just rely on the client to initiate a new connection
-    console.log(`Replacing peer ${clientId}`);
-
+  destroyPeer(clientId, { emit = true } = {}) {
     this._destroyTransport(clientId);
-    await this._createPeer(clientId);
+    if (emit) this.emit("peer-disconnected", clientId);
   }
 
     /*
@@ -71,7 +69,7 @@ export default class HostPeerManager extends EventEmitter {
   ============================================
   */
 
-  async _createPeer(clientId) {
+  async _createPeer(clientId, { reconnecting = false } = {}) {
     if (this.peerConnections.has(clientId)) {
       return;
     }
@@ -82,6 +80,8 @@ export default class HostPeerManager extends EventEmitter {
     );
 
     const dc = pc.createDataChannel("data");
+    pc.__peerboxReconnect = reconnecting;
+    pc.__peerboxSessionId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
     this.peerConnections.set(clientId, pc);
     this.dataChannels.set(clientId, dc);
@@ -97,6 +97,8 @@ export default class HostPeerManager extends EventEmitter {
 
       this.hostServer.sendSignal(clientId, {
         type: "offer",
+        reconnect: reconnecting,
+        sessionId: pc.__peerboxSessionId,
         sdp: pc.localDescription,
       });
 
@@ -116,11 +118,7 @@ export default class HostPeerManager extends EventEmitter {
 
     this._destroyTransport(clientId);
 
-    // IMPORTANT: recreate fresh peer connection
-    await this._createPeer(clientId);
-
-    // optional: emit high-level event AFTER recreation
-    this.emit("peer-reconnected", clientId);
+    await this._createPeer(clientId, { reconnecting: true });
   }
   
   /*
@@ -149,11 +147,13 @@ export default class HostPeerManager extends EventEmitter {
 
   _attachPeerHandlers(clientId, pc, dc) {
     dc.onopen = () => {
-      this.emit("peer-connected", clientId); 
+      this.emit("peer-connected", clientId, { reconnected: Boolean(pc.__peerboxReconnect) });
     };
 
     dc.onclose = () => {
-      this.emit("peer-transport-lost", clientId); // transport lost, wait for possible reconnect instead of immediate disconnect
+      if (this.dataChannels.get(clientId) === dc) {
+        this.emit("peer-transport-lost", clientId);
+      }
     };
 
     dc.onerror = (err) => {
@@ -161,13 +161,14 @@ export default class HostPeerManager extends EventEmitter {
     };
 
     dc.onmessage = (ev) => {
-      this._handleDataMessage(clientId, ev.data);
+      if (this.dataChannels.get(clientId) === dc) this._handleDataMessage(clientId, ev.data);
     };
 
     pc.onicecandidate = (ev) => {
       if (!ev.candidate) return;
       this.hostServer.sendSignal(clientId, {
         type: "ice-candidate",
+        sessionId: pc.__peerboxSessionId,
         candidate: ev.candidate,
       });
     };
@@ -175,11 +176,13 @@ export default class HostPeerManager extends EventEmitter {
     pc.onconnectionstatechange = () => {
       const state = pc.connectionState;
       if (state === "disconnected" || state === "failed" || state === "closed") {
+        if (this.peerConnections.get(clientId) !== pc) return;
         this.emit("peer-transport-lost", clientId); // transport lost, wait for possible reconnect instead of immediate disconnect
       }
     };
 
     pc.ontrack = (event) => {
+      if (this.peerConnections.get(clientId) !== pc) return;
       this.emit("track", {
         clientId,
         stream: event.streams[0],
@@ -218,6 +221,7 @@ export default class HostPeerManager extends EventEmitter {
     const pc = this.peerConnections.get(clientId);
 
     if (!pc) return;
+    if (data.sessionId && data.sessionId !== pc.__peerboxSessionId) return;
 
     if (data.type === "answer") {
       this._handleAnswer(clientId, pc, data);
@@ -235,6 +239,7 @@ export default class HostPeerManager extends EventEmitter {
       await pc.setRemoteDescription(
         new this.rtc.RTCSessionDescription(data.sdp)
       );
+      if (this.peerConnections.get(clientId) !== pc) return;
 
       const buffer =
         this.iceCandidateBuffers.get(clientId) || [];
@@ -256,6 +261,7 @@ export default class HostPeerManager extends EventEmitter {
   }
 
   async _handleIceCandidate(clientId, pc, data) {
+    if (this.peerConnections.get(clientId) !== pc) return;
     if (!data.candidate?.candidate) {
       return;
     }
@@ -283,12 +289,14 @@ export default class HostPeerManager extends EventEmitter {
       await pc.setRemoteDescription(
         new this.rtc.RTCSessionDescription(data.sdp)
       );
+      if (this.peerConnections.get(clientId) !== pc) return;
       
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
       this.hostServer.sendSignal(clientId, {
         type: "answer",
+        sessionId: pc.__peerboxSessionId,
         sdp: pc.localDescription,
       });
 
@@ -311,6 +319,7 @@ export default class HostPeerManager extends EventEmitter {
   }
 
   async _doRenegotiate(pc, clientId) {
+    if (this.peerConnections.get(clientId) !== pc) return;
     console.log("Renegotiating with peer", clientId);
 
     const offer = await pc.createOffer();
@@ -318,6 +327,7 @@ export default class HostPeerManager extends EventEmitter {
 
     this.hostServer.sendSignal(clientId, {
       type: "offer",
+      sessionId: pc.__peerboxSessionId,
       sdp: pc.localDescription,
     });
   }

@@ -1,4 +1,4 @@
-import EventEmitter from "events";
+import { EventEmitter } from "./eventEmitter.js";
 export const PeerStates = Object.freeze({
   CONNECTED: "connected",
   DISCONNECTED: "disconnected",
@@ -10,12 +10,12 @@ export const PeerStates = Object.freeze({
 
 
 export class HostReconnectManager extends EventEmitter {
-  constructor(host, options = {}) {
+  constructor({ peers }, options = {}) {
     super();
 
-    this.host = host;
+    this.peers = peers;
 
-    this.gracePeriod = options.gracePeriod || 120000; // ms to wait before fully disconnecting a peer
+    this.gracePeriod = options.gracePeriod ?? 120000;
 
     this.peerStates = new Map(); // clientId -> PeerStates
 
@@ -25,17 +25,14 @@ export class HostReconnectManager extends EventEmitter {
   }
 
   _bindEvents() {
-    this.host.peers.on("peer-transport-lost", (clientId) => {
+    this.peers.on("peer-transport-lost", (clientId) => {
       this._beginReconnect(clientId);
     });
     
-    this.host.peers.on("peer-connected", (clientId) => {
+    this.peers.on("peer-connected", (clientId) => {
       this._markConnected(clientId);
     });
 
-    this.host.peers.on("peer-reconnected", (clientId) => {
-      this._markReconnected(clientId);
-    });
   }
 
   getState(clientId) {
@@ -78,7 +75,7 @@ export class HostReconnectManager extends EventEmitter {
       this._setState(clientId, PeerStates.FAILED);
       this.emit("failed", clientId);
 
-      this.host.peers.destroyPeer?.(clientId);
+      this.peers.destroyPeer?.(clientId, { emit: false });
 
       this._setState(clientId, PeerStates.DISCONNECTED);
       console.log(`Peer ${clientId} failed to reconnect within grace period, disconnecting.`);
@@ -101,10 +98,15 @@ export class HostReconnectManager extends EventEmitter {
     }
   }
 
-  _markReconnected(clientId) {
+  peerLeft(clientId) {
     this._clearDisconnectTimer(clientId);
-    this._setState(clientId, PeerStates.RECONNECTED);
-    this.emit("reconnected", clientId);
+    this.peerStates.delete(clientId);
+  }
+
+  reset() {
+    for (const timer of this.disconnectTimers.values()) clearTimeout(timer);
+    this.disconnectTimers.clear();
+    this.peerStates.clear();
   }
 
   _markSynced(clientId) {
@@ -114,7 +116,7 @@ export class HostReconnectManager extends EventEmitter {
 
   _clearDisconnectTimer(clientId) {
     const timeout = this.disconnectTimers.get(clientId);
-    if (timeout) {
+    if (timeout !== undefined) {
       clearTimeout(timeout);
       this.disconnectTimers.delete(clientId);
     }

@@ -8,7 +8,8 @@
     "dev:host": "npx electron examples/chat-game/host/main.cjs",
     "build:host": "cross-env EXAMPLE=chat-game electron-builder",
     "dev:signal": "node signaling/signaling.js",
-    "dev:all": "concurrently --names \"VITE,ELECTRON,SIGNAL\" --prefix-colors \"cyan,magenta,green\" \"npm run dev:example\" \"npm run dev:host\" \"npm run dev:signal\""
+    "dev:browser-example": "concurrently --names \"VITE,SIGNAL\" --prefix-colors \"cyan,green\" \"npm run dev:example\" \"npm run dev:signal\"",
+    "dev:all": "npm run dev:browser-example"
   },
   "dependencies": {
     "peerbox": "file:./packages/peerbox",

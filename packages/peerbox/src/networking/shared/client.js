@@ -22,6 +22,6 @@ export default class Client {
 
   disconnect() {
     this.server.disconnect?.();
-    this.peer.close?.();  
+    this.peer.close?.();
   }
 }

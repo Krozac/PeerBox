@@ -1,0 +1,259 @@
+.lobby-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+
+  font-family: var(--font-family);
+  color: var(--text-color);
+
+  background-color: var(--background-color);
+  background-image:
+    url('assets/60-lines.png'),
+    radial-gradient(
+      circle at center,
+      var(--secondary-color) 0%,
+      var(--background-color) 100%
+    );
+}
+
+.lobby-card {
+  width: min(100%, 500px);
+  padding: clamp(24px, 6vw, 40px);
+
+  border: 6px solid var(--primary-color);
+  border-radius: 15px;
+
+  background-color: var(--background-color-2);
+
+  box-shadow:
+    0 1px 0 var(--secondary-color),
+    0 2px 0 var(--secondary-color),
+    0 3px 0 var(--secondary-color),
+    0 4px 0 var(--secondary-color),
+    0 5px 0 var(--secondary-color),
+    0 6px 0 var(--secondary-color),
+    0 7px 0 var(--secondary-color),
+    0 8px 0 var(--secondary-color),
+    0 0 5px rgba(10, 0, 0, .05),
+    0 1px 3px rgba(10, 0, 0, .2),
+    0 3px 5px rgba(10, 0, 0, .2),
+    0 5px 10px rgba(10, 0, 0, .2),
+    0 10px 10px rgba(10, 0, 0, .2),
+    0 20px 20px rgba(10, 0, 0, .3);
+
+  text-align: center;
+}
+
+/* Lobby logo */
+.lobby-logo {
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+
+  filter: drop-shadow(5px 5px 1px rgba(0, 0, 0, .4));
+}
+
+/* Lobby title */
+.lobby-card .pb-bubbles-title {
+  margin: 10px 0 8px;
+
+  font-family: var(--font-family);
+  font-size: clamp(3rem, 12vw, 5rem);
+  line-height: 1;
+
+  color: var(--primary-color);
+
+  text-shadow:
+    0 1px 0 var(--secondary-color),
+    0 2px 0 var(--secondary-color),
+    0 3px 0 var(--secondary-color),
+    0 4px 0 var(--secondary-color),
+    0 5px 0 var(--secondary-color),
+    0 6px 0 var(--secondary-color),
+    0 7px 0 var(--secondary-color),
+    0 8px 0 var(--secondary-color),
+    0 0 5px rgba(10, 0, 0, .05),
+    0 1px 3px rgba(10, 0, 0, .2),
+    0 3px 5px rgba(10, 0, 0, .2),
+    0 5px 10px rgba(10, 0, 0, .2),
+    0 10px 10px rgba(10, 0, 0, .2),
+    0 20px 20px rgba(10, 0, 0, .3);
+}
+
+.eyebrow {
+  color: var(--primary-color);
+
+  font-family: var(--font-family);
+  font-size: .75rem;
+  line-height: 1.2;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+
+  text-shadow: 2px 2px 0 var(--secondary-color);
+}
+
+.lobby-description {
+  margin: 0 0 24px;
+
+  color: var(--text-color);
+
+  font-family: var(--font-family);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* Lobby form */
+.lobby-form {
+  display: grid;
+  gap: 10px;
+  text-align: left;
+}
+
+.lobby-form label {
+  margin-top: 8px;
+
+  color: var(--text-color);
+
+  font-family: var(--font-family);
+  font-size: .9rem;
+}
+
+.lobby-form input {
+  min-width: 0;
+  width: 100%;
+
+  padding: 12px 14px;
+
+  border: 2px solid var(--primary-color);
+  border-radius: 5px;
+
+  background-color: #090713;
+  color: var(--text-color);
+
+  font-family: var(--font-family);
+  font-size: 1rem;
+}
+
+.lobby-form input::placeholder {
+  color: var(--text-color);
+  opacity: .55;
+}
+
+.lobby-form input:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Match the global button style */
+.lobby-form .pb-bubbles-button {
+  min-height: 48px;
+  margin-top: 10px;
+
+  width: 100%;
+
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+
+  border: none;
+  border-radius: 5px;
+
+  padding: 10px;
+
+  font-family: var(--font-family);
+  font-size: 1.2rem;
+
+  cursor: pointer;
+
+  transition:
+    background-color .3s ease,
+    transform .15s ease;
+}
+
+.lobby-form .pb-bubbles-button:hover {
+  background-color: var(--primary-color);
+}
+
+.lobby-form .pb-bubbles-button:active {
+  transform: translateY(2px);
+}
+
+/* Status message */
+.lobby-status {
+  min-height: 1.5em;
+  margin: 16px 0 0;
+
+  color: var(--text-color);
+
+  font-family: var(--font-family);
+  font-size: .9rem;
+  line-height: 1.5;
+}
+
+.lobby-status[data-error="true"] {
+  color: #ffb6b6;
+}
+
+/* Host link */
+.lobby-host-link {
+  display: inline-block;
+  margin-top: 12px;
+
+  color: var(--primary-color);
+
+  font-family: var(--font-family);
+  font-size: .95rem;
+  font-weight: normal;
+
+  text-decoration: none;
+
+  text-shadow: 2px 2px 0 var(--secondary-color);
+}
+
+.lobby-host-link:hover {
+  color: var(--text-color);
+}
+
+/* Connection / game status */
+.game-status {
+  position: absolute;
+  top: 8px;
+  right: 20px;
+  z-index: 20;
+
+  padding: 8px 12px;
+
+  border-radius: 5px;
+
+  background-color: var(--background-color-2);
+  color: var(--text-color);
+
+  font-family: var(--font-family);
+  font-size: .8rem;
+  line-height: 1.4;
+
+  box-shadow:
+    0 2px 0 var(--secondary-color),
+    0 4px 6px rgba(0, 0, 0, .25);
+}
+
+/* Mobile */
+@media (max-width: 560px) {
+  .lobby-page {
+    padding: 16px;
+  }
+
+  .lobby-card {
+    padding: 24px 20px;
+    border-width: 4px;
+  }
+
+  .lobby-card .pb-bubbles-title {
+    font-size: clamp(2.8rem, 16vw, 4rem);
+  }
+
+  .game-status {
+    top: 8px;
+    right: 10px;
+  }
+}
