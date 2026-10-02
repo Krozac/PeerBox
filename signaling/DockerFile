@@ -1,20 +1,15 @@
 # Use official Node.js LTS
 FROM node:18-alpine
 
-# Create app directory
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json first (for caching)
-COPY package.json ./
+RUN npm install --omit=dev ws@^8.18.3 express@^5.1.0 cors@^2.8.5 uuid@^11.1.0
 
-# Install dependencies
-RUN npm install --production
-
-# Copy app source
-COPY . .
+COPY signaling ./signaling
+COPY packages/peerbox-signaling ./packages/peerbox-signaling
 
 # Expose signaling port and API port
 EXPOSE 5501 5502
 
 # Start the server
-CMD ["node", "signaling.js"]
+CMD ["node", "signaling/signaling.js"]

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "peerbox": "file:./packages/peerbox",
+    "@peerbox/signaling": "file:./packages/peerbox-signaling",
     "peerbox-voice": "file:./packages/peerbox-voice",
     "concurrently": "^9.2.0",
     "cors": "^2.8.5",
